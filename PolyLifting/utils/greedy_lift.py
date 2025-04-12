@@ -23,9 +23,10 @@ def greedy_start(coeffs, x_in, lift_degree=2, lift_type=""):
     num_lifts = int(np.round(np.log(max_degree) / np.log(lift_degree), 2)) + 1
     lift_in = [0] * num_lifts
     g_lift = greedy_lift(G_all, lift_step, lift_in, poly_dim, lift_degree)
+
     G = create_poly.create_lifted_poly(coeffs, lift_degree, g_lift, lift_type=lift_type)
     s_out = lift_step[:2]
-    for i in range(num_lifts):
+    for i in range(1, num_lifts):
         if (g_lift[i]):
             s_out = cs.vertcat(s_out, lift_step[2 * i:2 * i + 2])
     return G, s_out
@@ -49,6 +50,7 @@ def enumerate_start(coeffs, x_in, lift_degree=2, lift_type=""):
     # compute states after one Newton step
     opts = {"max_iter": 1}
     lift_step, _ = newton.newton(G_all, lift_start, opts)
+    print(" lift_step: ", lift_step)
 
     # compute best lifting by enumerating all choices
     num_lifts = int(np.round(np.log(max_degree) / np.log(lift_degree), 2)) + 1
@@ -56,11 +58,10 @@ def enumerate_start(coeffs, x_in, lift_degree=2, lift_type=""):
 
     G = create_poly.create_lifted_poly(coeffs, lift_degree, e_lift, lift_type=lift_type)
     s_out = lift_step[:2]
-    for i in range(num_lifts):
+    for i in range(1, num_lifts):
         if (e_lift[i]):
             s_out = cs.vertcat(s_out, lift_step[2 * i:2 * i + 2])
 
-    # s_out = cs.DM([lift_start[2 * i:2 * i + 1] for i in range(num_lifts) if e_lift[i]])
     return G, s_out
 
 
@@ -131,9 +132,7 @@ def greedy_lift(poly, x_in, lift_in, num_coeffs, lift_degree=2):
 
         x_temp = initialize.initialize_auto(x_in, num_coeffs, lift_degree, lift_temp)
         curr_norm = cs.norm_2(poly(x_temp))
-        # print("test current lift: ", lift_temp)
-        # print(" curr state: ", x_temp)
-        # print(" curr norm: ", curr_norm)
+
         if (curr_norm < best_norm):
             # change lifting if current is better
             greedy_lift[i] = lift_temp[i]

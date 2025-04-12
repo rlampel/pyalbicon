@@ -4,27 +4,32 @@ import numpy as np
 import utils.newton as newton
 import utils.create_poly as create_poly
 import utils.greedy_lift as greedy_lift
+import os
 
 
 log_results = True
 lift_degree = 2
 TOL = 1.e-12
 
+dirname = os.path.dirname(__file__)
+filename = os.path.join(dirname, "poly_data/poly_conv.dat")
+
 if (log_results):
-    f = open("poly_data/poly_conv.dat", "w")
+    f = open(filename, "w")
     log_header = "max degree | def | greedy | enum | greedy mult | enum mult \n"
     f.write(log_header)
     f.close()
 
 start = cs.DM([5., 0.])
 
-num_reps = 100
+num_reps = 1
 
 np.random.seed(42)
 
 
 # coeffs = np.random.rand(poly_dim) * 2 - 1
 for poly_dim in range(5, 18, 2):
+    print("-" * 20)
     avg_default = 0
     avg_greedy = 0
     avg_enum = 0
@@ -43,11 +48,13 @@ for poly_dim in range(5, 18, 2):
 
         coeffs = create_poly.create_coeffs(roots)
 
+        # compute lifting and first Newton step simultaneously
         F = create_poly.create_poly(coeffs)
         G1, s1 = greedy_lift.greedy_start(coeffs, start, lift_degree)
         G2, s2 = greedy_lift.enumerate_start(coeffs, start, lift_degree)
         G1m, s1m = greedy_lift.greedy_start(coeffs, start, lift_degree, lift_type="multilin")
         G2m, s2m = greedy_lift.enumerate_start(coeffs, start, lift_degree, lift_type="multilin")
+        print(s1, "\n", s2, "\n", s1m, "\n", s2m)
 
         sol, plot_vals = newton.newton(F, start)
         plt.plot([i for i in range(1, len(plot_vals))], plot_vals[1:], label="default")
@@ -85,7 +92,7 @@ for poly_dim in range(5, 18, 2):
         plt.legend(loc="upper right")
         plt.yscale("log")
         plt.title("highest degree: " + str(poly_dim - 1))
-        plt.pause(0.01)
+        plt.pause(1.01)
         plt.clf()
 
     text_out = f"{poly_dim - 1} & "
@@ -97,7 +104,7 @@ for poly_dim in range(5, 18, 2):
 
     print(text_out)
     if (log_results):
-        f = open("poly_data/poly_conv.dat", "a")
+        f = open(filename, "a")
         f.write(text_out)
         f.close()
 

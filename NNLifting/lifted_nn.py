@@ -3,15 +3,18 @@ import numpy as np
 import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
+import os
 
 
 # Define the neural network
 
 lift = True
 log_results = True
+dirname = os.path.dirname(__file__)
+filename_log = os.path.join(dirname, "nn_results.log")
 
 if (log_results):
-    f = open("nn_results.log", "w")
+    f = open(filename_log, "w")
     title = "Lifted" if lift else "Unlifted"
     f.write(title + "\n")
     f.close()
@@ -208,7 +211,7 @@ def newton(G, x_start, model, opts={}):
         plt.colorbar()
         plt.pause(0.2)
         if (log_results):
-            f = open("nn_results.log", "a")
+            f = open(filename_log, "a")
             f.write(str(counter) + " " + str(func_norm) + "\n")
             f.close()
         print("Current loss: ", cross_entropy_loss(curr_out, target_index))
@@ -217,9 +220,11 @@ def newton(G, x_start, model, opts={}):
 
 
 model = NeuralNet()
-model.load_state_dict(torch.load("trained_weights/mnist_model.pth"))
+filename_weights = os.path.join(dirname, "trained_weights/mnist_model.pth")
+model.load_state_dict(torch.load(filename_weights))
 
-test = np.loadtxt("MNIST_7.dat", delimiter=",")
+filename_seven = os.path.join(dirname, "MNIST_7.dat")
+test = np.loadtxt(filename_seven, delimiter=",")
 test = cs.DM(test)
 plot_test = np.reshape(np.array(test), (28, 28))
 

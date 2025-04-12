@@ -1,6 +1,4 @@
-import numpy as np
 import casadi as cs
-from . import initialize, create_poly, greedy_lift
 
 
 def newton(G, x_start, opts={}):

@@ -90,7 +90,6 @@ def create_lifted_poly(coeffs, lift_degree=2, lifting_points=[], lift_type=""):
             for k in range(1, num_lifts + 1):
                 if (coeffs[j] == 0):
                     break
-                # print("index k: ", -k)
                 curr_var_exp = lift_degree**(num_lifts - k)
                 if (k == num_lifts):
                     lift_var = complex_utils.complex_exponent(S[var_ind], curr_exp)

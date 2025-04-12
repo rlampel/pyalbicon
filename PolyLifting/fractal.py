@@ -9,9 +9,12 @@ rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
 rc('text', usetex=True)
 
 
+# settings
 x_interv = [-1, 1]  # range of real values
 y_interv = [-1, 1]  # range of imaginary values
-res = 50  # number of sampling points in interval [0,1]
+res = 20  # number of sampling points in interval [0,1]
+lift_degree = 2  # choose 2 for the lifted function and 1 for the default function
+line_search = False  # choose False for Figure 3 and True for Figure 4
 
 coeffs = [-2] + [0] * 15 + [1]
 
@@ -124,7 +127,7 @@ def color_grading(roots, replot, implot, TOL=1.e-5):
 
 
 replot, implot, stepplot = plot_convergence(coeffs, x_interv, y_interv, res,
-                                            lift_degree=2, line_search=False)
+                                            lift_degree=lift_degree, line_search=line_search)
 roots = np.polynomial.polynomial.polyroots(coeffs)
 plot = color_grading(roots, replot, implot)
 
