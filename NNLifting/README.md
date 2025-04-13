@@ -1,8 +1,5 @@
-# Polynomial Lifting
+# Neural Network Lifting
 
-
-
-## Getting started
 
 To compute an adversarial attack on a neural network as described in Section 4.4 of [1], run
 ```

@@ -1,9 +1,6 @@
 # Polynomial Lifting
 
 
-
-## Getting started
-
 To recreate the Newton fractals shown in Figure 3 and Figure 4 of [1], run
 ```
 python fractal.py

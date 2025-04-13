@@ -1,8 +1,5 @@
-# Lifted BVP Solver
+# ODE BVP Lifting
 
-
-
-## Getting started
 
 To solve the benchmark problems T19-T33 from [1] in a row, simply run 
 ```
