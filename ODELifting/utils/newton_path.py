@@ -3,7 +3,7 @@ import casadi as cs
 
 def newton_path(G, x_start, lamb=1, opts={}):
     """Returns an array containing all Newton iterates for a given function
-    with starting points and step size control.
+    with step size control.
 
     Keyword arguments:
         G   -- casadi function

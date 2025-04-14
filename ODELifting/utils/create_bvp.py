@@ -16,7 +16,7 @@ def get_next_time_point(curr_time, time_points):
 
 
 def create_bvp(ode, R, grid, x_dim):
-    """Create a boundary value function from given ODE, boundary function R, time and lifting points
+    """Create a boundary value function from given ODE, boundary function R, and time grid.
 
     Keyword arguments:
         ode     -- casadi function that describes the ODE
@@ -34,6 +34,7 @@ def create_bvp(ode, R, grid, x_dim):
     S = Sk  # lifted input
     Sk_temp = Sk
     for k in range(N):
+        # turn off warning messages, especially for plotting the heatmap
         opts = {"show_eval_warnings": False, "common_options": {"show_eval_warnings": False}}
         t_curr, t_next = time_points[k], time_points[k + 1]
         # integrate to next possible lifting point

@@ -7,14 +7,15 @@ import utils.greedy_lift as greedy_lift
 import os
 
 
-log_results = True
-lift_degree = 2
-TOL = 1.e-12
-
-dirname = os.path.dirname(__file__)
-filename = os.path.join(dirname, "poly_data/poly_conv.dat")
+log_results = False  # write results to a file
+lift_degree = 2  # degree of the component functions
+plot_delay = 0.01  # how many seconds to show the results
+TOL = 1.e-12  # final residual tolerance
 
 if (log_results):
+    dirname = os.path.dirname(__file__)
+    filename = os.path.join(dirname, "poly_data/poly_conv.dat")
+
     f = open(filename, "w")
     log_header = "max degree | def | greedy | enum | greedy mult | enum mult \n"
     f.write(log_header)
@@ -22,12 +23,11 @@ if (log_results):
 
 start = cs.DM([5., 0.])
 
-num_reps = 1
+num_reps = 100
 
 np.random.seed(42)
 
 
-# coeffs = np.random.rand(poly_dim) * 2 - 1
 for poly_dim in range(5, 18, 2):
     print("-" * 20)
     avg_default = 0
@@ -54,7 +54,6 @@ for poly_dim in range(5, 18, 2):
         G2, s2 = greedy_lift.enumerate_start(coeffs, start, lift_degree)
         G1m, s1m = greedy_lift.greedy_start(coeffs, start, lift_degree, lift_type="multilin")
         G2m, s2m = greedy_lift.enumerate_start(coeffs, start, lift_degree, lift_type="multilin")
-        print(s1, "\n", s2, "\n", s1m, "\n", s2m)
 
         sol, plot_vals = newton.newton(F, start)
         plt.plot([i for i in range(1, len(plot_vals))], plot_vals[1:], label="default")
@@ -92,7 +91,7 @@ for poly_dim in range(5, 18, 2):
         plt.legend(loc="upper right")
         plt.yscale("log")
         plt.title("highest degree: " + str(poly_dim - 1))
-        plt.pause(1.01)
+        plt.pause(plot_delay)
         plt.clf()
 
     text_out = f"{poly_dim - 1} & "

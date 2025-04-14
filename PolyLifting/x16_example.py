@@ -12,9 +12,10 @@ coeffs = [-2] + [0] * 15 + [1]
 num_reps = 1
 
 # settings
-log_results = False
-log_type = "step"  # choose "step" to plot convergence w.r.t. step lengths, 
-                   # otherwise the residual convergence is plotted
+log_results = False  # chose whether to write the iterations to a file
+log_type = "res"  # choose "res" to plot the residual convergence
+# log_type = "step"  # otherwise the convergence w.r.t. step lenghts is plotted
+newton_opts = {"verbose": False, "max_iter": 100, "log_type": log_type}
 
 if log_results:
     dirname = os.path.dirname(__file__)
@@ -23,8 +24,6 @@ if (log_type == "step"):
     name_suffix = "_step"
 else:
     name_suffix = ""
-
-newton_opts = {"verbose": True, "max_iter": 100, "log_type": log_type}
 
 if (log_results):
     # clear logged results
@@ -61,8 +60,8 @@ for i in range(num_reps):
         f.close()
 
     for exponent in range(0, 6):
-        print("exponent is ", exponent)
         lift_degree = 2 ** (1 / 2**exponent)
+        print("component degree is ", lift_degree)
         # create lifting with fixed polynomial degree
         lift_start = initialize.initialize_auto(start, poly_dim, lift_degree)
         lift_start = lift_start[:8 * 2**(exponent)]

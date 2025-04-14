@@ -42,7 +42,7 @@ def newton(G, x_start, opts={}):
 
 
 def auto_lifted_newton(problem, lift_init=None, s_init=None, opts={}):
-    """Newton's method that adapt the lifting in every iteration.
+    """Newton's method that adapts the lifting in every iteration.
 
     Keyword arguments:
         problem     -- instance of the problem class for a bvp
@@ -52,6 +52,8 @@ def auto_lifted_newton(problem, lift_init=None, s_init=None, opts={}):
                     - TOL       -- final residual tolerance
                     - max_iter  -- maximum number of iterations
                     - verbose   -- print outputs or not
+                    - plot_iter -- plot the states in every iteration
+                    - plot_delay -- how long to show the plot in every iteration
     """
     TOL = opts.get("TOL", 1.e-12)
     max_iter = opts.get("max_iter", 500)

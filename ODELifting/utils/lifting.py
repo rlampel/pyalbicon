@@ -50,7 +50,8 @@ def best_graph_lift(ode, R, starting_times, starting_vals, time_points, x_dim,
                                 (if there are multiple candidates at one time point)
     """
     states = []
-    eps = 1.e-16
+    eps = 1.e-16  # add eps to every edge weight, since edges with weight 0 do not exit
+
     # integrate all states to the end of the time interval
     for i in range(len(starting_times)):
         temp_grid = {"time": [el for el in time_points if el >= starting_times[i]]}
@@ -63,6 +64,7 @@ def best_graph_lift(ode, R, starting_times, starting_vals, time_points, x_dim,
     num_nodes = 1
     incidence = np.zeros((num_nodes, num_nodes))
 
+    # a "layer" stands for all vertices in the graph that belong to a certain time point
     # keep track of current and next layer
     times = [0]     # keep track of at which time point a candidate was introduced
     candidate_times = [0]

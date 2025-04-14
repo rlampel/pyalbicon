@@ -50,7 +50,6 @@ def enumerate_start(coeffs, x_in, lift_degree=2, lift_type=""):
     # compute states after one Newton step
     opts = {"max_iter": 1}
     lift_step, _ = newton.newton(G_all, lift_start, opts)
-    print(" lift_step: ", lift_step)
 
     # compute best lifting by enumerating all choices
     num_lifts = int(np.round(np.log(max_degree) / np.log(lift_degree), 2)) + 1

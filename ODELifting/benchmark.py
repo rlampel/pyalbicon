@@ -11,7 +11,7 @@ import os
 
 
 # settings
-log_results = False  # write results into log file
+log_results = True  # write results into log file
 plot_region = False     # plot the local contraction as a heatmap
 plot_auto_lift = False  # plot the current lifting for every step of auto_lifted_newton
 plot_results = True  # plot the convergence comparison for the different algorithms
@@ -29,7 +29,7 @@ if (log_results):
     f.write(header + "\n")
     f.close()
 
-for p in range(19, 25):
+for p in range(19, 34):
     curr_name = "T" + str(p)
 
     # get problem details

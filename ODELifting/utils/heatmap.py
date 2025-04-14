@@ -17,7 +17,7 @@ def compute_contraction(B, s0, s1):
 
 def plot_heatmap_default(ode, R, xlb, xub, plot_dim):
     """Returns a numpy array with plot_dim rows and columns that contains the local residual
-    contractions of the BVP defined via ode and R for values within the interval [xlb, xub].
+    contractions of the BVP, defined via ode and R, for values within the interval [xlb, xub]^2.
 
     Keyword arguments:
         ode -- casadi function
@@ -47,8 +47,8 @@ def plot_heatmap_default(ode, R, xlb, xub, plot_dim):
 
 def plot_heatmap_graph(ode, R, xlb, xub, plot_dim):
     """Returns a numpy array with plot_dim rows and columns that contains the local residual
-    contractions of the optimal lifting of the BVP defined via ode and R and for values within
-    the interval [xlb, xub].
+    contractions of the optimal lifting of the BVP, defined via ode and R, for values within
+    the interval [xlb, xub]^2.
 
     Keyword arguments:
         ode -- casadi function
@@ -86,7 +86,6 @@ def plot_heatmap_graph(ode, R, xlb, xub, plot_dim):
             contr = compute_contraction(B, s_best, s_next)
             if (np.isnan(contr)):
                 contr = np.inf
-            # print("contraction for ",x_start,": ",contr)
             plot_matrix[plot_dim - 1 - i, j] = contr
     return plot_matrix
 
@@ -94,8 +93,8 @@ def plot_heatmap_graph(ode, R, xlb, xub, plot_dim):
 def plot_heatmap_auto_random_graph(problem, xlb, xub, plot_dim, random_scale,
                                    seed=42):
     """Returns a numpy array with plot_dim rows and columns that contains the local residual
-    contractions of the optimal lifting of the BVP defined via the problem class for values within
-    the interval [xlb, xub] with randomly perturbed intermediate values.
+    contractions of the optimal lifting of the BVP, defined via the problem class, for values within
+    the interval [xlb, xub]^2. The intermediate values are determined using random perturbations.
 
     Keyword arguments:
         problem     -- instance of the problem class for a bvp

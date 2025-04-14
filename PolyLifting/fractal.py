@@ -12,8 +12,8 @@ rc('text', usetex=True)
 # settings
 x_interv = [-1, 1]  # range of real values
 y_interv = [-1, 1]  # range of imaginary values
-res = 20  # number of sampling points in interval [0,1]
-lift_degree = 2  # choose 2 for the lifted function and 1 for the default function
+res = 50  # number of sampling points in interval [0,1]
+lift_degree = 1  # choose 2 for the lifted function and 1 for the default function
 line_search = False  # choose False for Figure 3 and True for Figure 4
 
 coeffs = [-2] + [0] * 15 + [1]
@@ -136,7 +136,6 @@ fig, ax = plt.subplots(1, 1, figsize=(15, 10), dpi=100, sharey=True)
 cmap = plt.cm.viridis.resampled(len(roots) + 1)
 im = ax.imshow(plot, cmap=cmap)
 
-# ax.imshow(-stepplot, alpha=0.25, cmap="gray")
 cax = fig.add_axes([ax.get_position().x1 + 0.05,
                     ax.get_position().y0,
                     0.05,

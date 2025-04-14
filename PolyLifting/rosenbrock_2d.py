@@ -7,6 +7,8 @@ import matplotlib as mpl
 mpl.rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
 mpl.rc('text', usetex=True)
 
+plot_dim = 51  # resolution of the plot
+
 
 def fs_init(x_start):
     x_out = x_start
@@ -70,7 +72,6 @@ xlb, xub = -2, 2
 ylb, yub = -1, 3
 xb = [xlb, xub]
 yb = [ylb, yub]
-plot_dim = 51
 plot_default = create_heatmap(xb, yb, plot_dim)
 plot_lift = create_heatmap(xb, yb, plot_dim, True)
 max_val_def = np.max(plot_default)

@@ -22,7 +22,7 @@ def initialize(init_vals, grid, ode, init_type="auto", bounds=None):
 
 def initialize_lin(init_vals, grid):
     """Initialize all values as the starting points or interpolate linearly
-    between given starting and end point.
+    between given start and end point.
 
     Keyword arguments:
         init_vals   --  dict containing the independent variable and dimension
