@@ -5,11 +5,11 @@ from . import base_class
 
 class Problem(base_class.BVP):
     lamb = 0.05
-    x_dim = 30
-    seed = 42
 
-    def __init__(self):
-        base_class.BVP()
+    def __init__(self, seed=42, x_dim=20):
+        base_class.BVP.__init__(self)
+        self.seed = seed
+        self.x_dim = x_dim
 
     def get_ode(self):
         # Declare model variables
@@ -35,7 +35,7 @@ class Problem(base_class.BVP):
         x_end = cs.MX.sym('xe', self.x_dim)
 
         # declare boundary function
-        bvs = x_end - cs.DM([1] * self.x_dim)
+        bvs = x_end - 0.5 * x_start  # cs.DM([1] * self.x_dim)
         R = cs.Function('R', [x_start, x_end], [bvs], ['xs', 'xe'], ['bvp'])
         return R
 
@@ -47,7 +47,7 @@ class Problem(base_class.BVP):
 
     def get_grid_details(self):
         min_t = 0
-        max_t = 5
+        max_t = 10
         num_lifts = 20
         return min_t, max_t, num_lifts
 

@@ -121,7 +121,7 @@ def _compute_point(args):
 
 
 def create_heatmap_parallel(xb, yb, plot_dim, auto_lifting=False, max_workers=None):
-    """Parallelized version of create_heatmap."""
+    """Parallelized function that creates a heatmap of the required iterations."""
     xlb, xub = xb
     ylb, yub = yb
     plot_vals_x = np.linspace(xlb, xub, plot_dim)

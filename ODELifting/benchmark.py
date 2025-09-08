@@ -12,11 +12,11 @@ import os
 
 # settings
 log_results = True  # write results into log file
-plot_region = True     # plot the local contraction as a heatmap
+plot_region = False     # plot the local contraction as a heatmap
 plot_auto_lift = True  # plot the current lifting for every step of auto_lifted_newton
 plot_results = True  # plot the convergence comparison for the different algorithms
-plot_delay = 1.5          # how long to show each newton iteration for repeated lifting
-result_delay = 1        # how long to show the convergence plots
+plot_delay = 0.25          # how long to show each newton iteration for repeated lifting
+result_delay = 2        # how long to show the convergence plots
 verbose = True        # print out all Newton iterations
 
 # file where the results will be saved
@@ -29,7 +29,7 @@ if (log_results):
     f.write(header + "\n")
     f.close()
 
-for p in range(22, 34):
+for p in range(19, 34):
     curr_name = "T" + str(p)
 
     # get problem details
@@ -48,7 +48,7 @@ for p in range(22, 34):
 
     # plot local contraction as a heatmap
     if (plot_region and s_dim == 2):
-        plot_dim = 51       # resolution of the heatmap
+        plot_dim = 11       # resolution of the heatmap
         xlb, xub = -5, 5     # boundaries of the heatmap
         lb, ub = 0, 2        # limit contraction to values in [0,2]
 
@@ -129,12 +129,8 @@ for p in range(22, 34):
     auto_conv = [float(el) for el in func_arr]
 
     # heuristic lifting
-    seed = 42
-    np.random.seed(seed)
-    noise = np.random.uniform(-1, 1, len(time_points) * s_dim)
-    noise[:s_dim] = [0] * s_dim     # remove noise of independent variable
-    noise = cs.DM(list(noise))
-    start_vals = s_init + noise
+    # constant initialization for all variables
+    start_vals = initialization.initialize_lin(init, grid)
     heur_lift = lifting.best_graph_lift(ode, R, time_points, start_vals, time_points, s_dim)
     grid["lift"] = initialization.convert_lifting(heur_lift, time_points)
     s_best = initialization.select_states(start_vals, s_dim, grid["lift"])

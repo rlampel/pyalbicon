@@ -3,6 +3,10 @@ from . import initialization
 
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import shortest_path
+from concurrent.futures import ProcessPoolExecutor
+
+# globals for workers
+_global_ode = None
 
 
 def get_num_items(arr, item):
@@ -32,8 +36,20 @@ def remove_nan(arr):
     return arr
 
 
+def _compute_state(args):
+    # worker function for parallelization
+    ode = _global_ode
+    i, starting_time, starting_vals, x_dim, time_points = args
+    temp_grid = {"time": [el for el in time_points if el >= starting_time]}
+    temp_init = {"s_start": starting_vals[i * x_dim:(i + 1) * x_dim], "s_dim": x_dim}
+    int_vals = initialization.initialize(temp_init, temp_grid, ode, "auto")
+    int_vals = np.reshape(int_vals, (-1, x_dim))
+    int_vals = remove_nan(int_vals)
+    return i, int_vals
+
+
 def best_graph_lift(ode, R, starting_times, starting_vals, time_points, x_dim,
-                    verbose=False, return_state_indx=False):
+                    verbose=False, return_state_indx=False, parallel=True, max_workers=None):
     """Compute the lifting with the optimal residual contraction for a BVP.
 
     Keyword arguments:
@@ -48,18 +64,33 @@ def best_graph_lift(ode, R, starting_times, starting_vals, time_points, x_dim,
         verbose         --  print additional information
         return_state_indx   --  return the index of the best new candidate for a lifting point
                                 (if there are multiple candidates at one time point)
+        parallel        -- enables parallel computation for FSInit
+        max_workers     -- maximum number of parallel workers (only if parallel=True)
     """
     states = []
     eps = 1.e-16  # add eps to every edge weight, since edges with weight 0 do not exit
 
     # integrate all states to the end of the time interval
-    for i in range(len(starting_times)):
-        temp_grid = {"time": [el for el in time_points if el >= starting_times[i]]}
-        temp_init = {"s_start": starting_vals[i * x_dim:(i + 1) * x_dim], "s_dim": x_dim}
-        int_vals = initialization.initialize(temp_init, temp_grid, ode, "auto")
-        int_vals = np.reshape(int_vals, (-1, x_dim))
-        int_vals = remove_nan(int_vals)
-        states += [int_vals]
+    if parallel:
+        global _global_ode
+        _global_ode = ode
+        tasks = [(i, starting_times[i], starting_vals, x_dim, time_points)
+                 for i in range(len(starting_times))]
+
+        states = [None] * len(starting_times)  # preallocate
+
+        with ProcessPoolExecutor(max_workers=max_workers) as executor:
+            for i, int_vals in executor.map(_compute_state, tasks):
+                states[i] = int_vals
+
+    else:
+        for i in range(len(starting_times)):
+            temp_grid = {"time": [el for el in time_points if el >= starting_times[i]]}
+            temp_init = {"s_start": starting_vals[i * x_dim:(i + 1) * x_dim], "s_dim": x_dim}
+            int_vals = initialization.initialize(temp_init, temp_grid, ode, "auto")
+            int_vals = np.reshape(int_vals, (-1, x_dim))
+            int_vals = remove_nan(int_vals)
+            states += [int_vals]
 
     num_nodes = 1
     incidence = np.zeros((num_nodes, num_nodes))
@@ -112,7 +143,12 @@ def best_graph_lift(ode, R, starting_times, starting_vals, time_points, x_dim,
                 s_old = states[j - curr_candidates][-(num_lift_points - curr_lift_point)]
                 # value of the new candidate
                 s_new = states[indx][0]
-                dist = np.linalg.norm(s_old - s_new)**2
+                try:
+                    diff = s_old - s_new
+                    dist = np.linalg.norm(diff)**2
+                except RuntimeWarning:
+                    dist = np.inf
+
                 if (np.isnan(dist)):
                     dist = np.inf
                 incidence[j, k] = dist + eps

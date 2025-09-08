@@ -96,7 +96,8 @@ def _compute_point_graph(args):
     s_next, _ = newton.newton(B, s_init, {"max_iter": 1})
 
     graph_lift = lifting.best_graph_lift(_global_ode, _global_R,
-                                         time_points, s_next, time_points, 2)
+                                         time_points, s_next, time_points, 2,
+                                         parallel=False)
     graph_lift = list(graph_lift)
     lifting_points = initialization.convert_lifting(graph_lift, time_points)
     s_best = initialization.select_states(s_init, 2, lifting_points)
@@ -149,7 +150,7 @@ def _compute_point_graph_init(args):
                                            {"time": time_points}, _global_ode, "lin")
 
     graph_lift = lifting.best_graph_lift(_global_ode, _global_R, time_points, start_vals,
-                                         time_points, x_dim)
+                                         time_points, x_dim, parallel=False)
     graph_lift = list(graph_lift)
 
     # compute contraction
@@ -231,7 +232,7 @@ def plot_heatmap_auto_random_graph(problem, xlb, xub, plot_dim, random_scale,
             start_vals = start_vals + noise
 
             graph_lift = lifting.best_graph_lift(ode, R, time_points, start_vals,
-                                                 time_points, x_dim)
+                                                 time_points, x_dim, parallel=False)
             graph_lift = list(graph_lift)
 
             # compute contraction
