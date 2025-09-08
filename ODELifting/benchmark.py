@@ -12,12 +12,12 @@ import os
 
 # settings
 log_results = True  # write results into log file
-plot_region = False     # plot the local contraction as a heatmap
-plot_auto_lift = False  # plot the current lifting for every step of auto_lifted_newton
+plot_region = True     # plot the local contraction as a heatmap
+plot_auto_lift = True  # plot the current lifting for every step of auto_lifted_newton
 plot_results = True  # plot the convergence comparison for the different algorithms
-plot_delay = 0.5          # how long to show each newton iteration for repeated lifting
-result_delay = 5        # how long to show the convergence plots
-verbose = False         # print out all Newton iterations
+plot_delay = 1.5          # how long to show each newton iteration for repeated lifting
+result_delay = 1        # how long to show the convergence plots
+verbose = True        # print out all Newton iterations
 
 # file where the results will be saved
 dirname = os.path.dirname(__file__)
@@ -29,7 +29,7 @@ if (log_results):
     f.write(header + "\n")
     f.close()
 
-for p in range(19, 34):
+for p in range(22, 34):
     curr_name = "T" + str(p)
 
     # get problem details
@@ -48,13 +48,13 @@ for p in range(19, 34):
 
     # plot local contraction as a heatmap
     if (plot_region and s_dim == 2):
-        plot_dim = 101       # resolution of the heatmap
+        plot_dim = 51       # resolution of the heatmap
         xlb, xub = -5, 5     # boundaries of the heatmap
         lb, ub = 0, 2        # limit contraction to values in [0,2]
 
         a = heatmap.plot_heatmap_default(ode, R, xlb, xub, plot_dim)
         g = heatmap.plot_heatmap_graph(ode, R, xlb, xub, plot_dim)
-        h = heatmap.plot_heatmap_auto_random_graph(problem, xlb, xub, plot_dim, 1)
+        h = heatmap.plot_heatmap_auto_const(problem, xlb, xub, plot_dim)
 
         fig, axes = plt.subplots(1, 3, figsize=(15, 6), dpi=100, sharey=True)
         im1 = axes[0].imshow(a, vmin=lb, vmax=ub)
@@ -99,6 +99,7 @@ for p in range(19, 34):
 
     # lift at every point to compute all possible steps
     s_init = initialization.initialize(init, grid, ode)
+    # s_init = initialization.initialize_lin(init, grid)
     grid["lift"] = [1 for i in range(len(time_points))]
     B_lift_all = create_bvp.create_bvp(ode, R, grid, s_dim)
     first_iter, _ = newton.newton(B_lift_all, s_init,

@@ -1,6 +1,55 @@
 import casadi as cs
+import numpy as np
 import matplotlib.pyplot as plt
 from . import create_bvp, initialization, lifting, plot_states
+
+
+def trust_region(G, x, dx, start_mu=1, TOL=1.e-6, verbose=False):
+    """Deuflhard's residual-based trust region algorithm.
+
+    Keyword arguments:
+        G   -- casadi function
+        x   -- starting point
+        dx  -- current step
+        start_mu   -- initial estimate for residual contraction parameter
+        TOL -- final tolerance
+        verbose -- print additional information
+    """
+    lam_min = 1.e-11
+    mu = start_mu
+    if (np.isnan(mu)):
+        mu = np.inf
+        lam = 1
+    else:
+        lam = np.min([1, mu])
+    new_lam = 0
+    flag = False
+
+    while (True):
+        if (verbose):
+            print("trust region with lam = ", lam)
+        if (np.abs(lam) < lam_min):
+            print("Step size too small!")
+            # flag = True
+            break
+        x_next = x + lam * dx
+        # compute monitoring quantities
+        theta = cs.norm_2(G(x_next)) / cs.norm_2(G(x))
+        if (np.isnan(theta)):
+            theta = np.inf
+
+        mu = 0.5 * lam**2 * cs.norm_2(G(x)) / cs.norm_2(G(x_next) - (1 - lam) * G(x))
+        mu = float(mu)
+        if (np.isnan(mu)):
+            mu = np.inf
+
+        if (theta >= 1 - lam / 4):
+            new_lam = np.min(np.array([mu, 0.5 * lam]).flatten())
+            lam = new_lam
+        else:
+            break
+
+    return lam, mu, flag
 
 
 def newton(G, x_start, opts={}):
@@ -14,8 +63,8 @@ def newton(G, x_start, opts={}):
                     - max_iter  -- maximum number of iterations
                     - verbose   -- print outputs or not
     """
-    TOL = opts.get("TOL", 1.e-12)
-    max_iter = opts.get("max_iter", 500)
+    TOL = opts.get("TOL", 1.e-8)
+    max_iter = opts.get("max_iter", 50)
     verbose = opts.get("verbose", False)
 
     x = x_start
@@ -31,7 +80,9 @@ def newton(G, x_start, opts={}):
     while (func_norm > TOL and counter < max_iter):
         dx = -cs.solve(DG(x), func_val)
         counter += 1
-        x = x + dx
+        # lam, _, _ = trust_region(G, x, dx)
+        lam = 1
+        x = x + lam * dx
         func_val = G(x)
         func_norm = cs.norm_2(func_val)
         func_arr += [func_norm]
@@ -55,8 +106,8 @@ def auto_lifted_newton(problem, lift_init=None, s_init=None, opts={}):
                     - plot_iter -- plot the states in every iteration
                     - plot_delay -- how long to show the plot in every iteration
     """
-    TOL = opts.get("TOL", 1.e-12)
-    max_iter = opts.get("max_iter", 500)
+    TOL = opts.get("TOL", 1.e-8)
+    max_iter = opts.get("max_iter", 50)
     verbose = opts.get("verbose", False)
     plot_iter = opts.get("plot", True)
     plot_delay = opts.get("plot_delay", 1)
@@ -105,7 +156,9 @@ def auto_lifted_newton(problem, lift_init=None, s_init=None, opts={}):
     while (func_norm > TOL and counter < max_iter):
         # perform Newton step with all lifting points
         ds = - cs.solve(DB_lift_all(s_curr), func_val)
-        s_next = s_curr + ds
+        # lam, _, _ = trust_region(B_lift_all, s_curr, ds)
+        lam = 1
+        s_next = s_curr + ds * lam
         counter += 1
 
         # determine best lifting
@@ -129,6 +182,8 @@ def auto_lifted_newton(problem, lift_init=None, s_init=None, opts={}):
 
         if (verbose):
             print("Iteration: ", counter, "\t current best lift: ", graph_points)
+            print("current values: ", s_curr)
+            print(" current norm: ", func_norm)
 
     if (plot_iter):
         plt.pause(plot_delay)

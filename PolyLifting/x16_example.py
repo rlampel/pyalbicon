@@ -39,6 +39,9 @@ if (log_results):
         f.write("")
         f.close()
 
+# line styles for plotting
+line_styles = ["-.", "--", ":", "-"]
+
 for i in range(num_reps):
 
     F = create_poly.create_poly(coeffs)
@@ -72,7 +75,10 @@ for i in range(num_reps):
         if (log_type == "step"):
             lift_conv = [float(cs.norm_2(el[:2 * 4 * 2**(exponent)])) for el in lift_conv]
 
-        curr_label = f"lifted degree {lift_degree:.3f}"
+        if exponent == 0:
+            curr_label = r"lifted degree $2$"
+        else:
+            curr_label = r"lifted degree $\sqrt[" + str(2**exponent) + "]{2}$"
 
         print("first contraction: " + str(lift_conv[1] / lift_conv[0]) + "\n")
         if (log_results):
@@ -86,8 +92,14 @@ for i in range(num_reps):
             f.write("\n")
             f.close()
 
-        plt.plot([i for i in range(len(lift_conv))], lift_conv, label=curr_label, linestyle="--")
+        plt.plot([i for i in range(len(lift_conv))], lift_conv, label=curr_label,
+                 linestyle=line_styles[exponent % 4])
     plt.yscale("log")
+    plt.xlabel("iteration")
+    if log_type == "res":
+        plt.ylabel("residual norm")
+    else:
+        plt.ylabel("step size")
     plt.legend()
     plt.show()
 

@@ -5,6 +5,14 @@ from tqdm import tqdm
 import utils.create_poly as create_poly
 import utils.initialize as initialize
 from matplotlib import rc
+from concurrent.futures import ProcessPoolExecutor
+
+# globals for workers
+_global_coeffs = None
+_global_lift_degree = None
+_global_line_search = None
+_global_f = None
+# font settings
 rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
 rc('text', usetex=True)
 
@@ -12,8 +20,8 @@ rc('text', usetex=True)
 # settings
 x_interv = [-1, 1]  # range of real values
 y_interv = [-1, 1]  # range of imaginary values
-res = 50  # number of sampling points in interval [0,1]
-lift_degree = 1  # choose 2 for the lifted function and 1 for the default function
+res = 100  # number of sampling points in interval [0,1]
+lift_degree = 2  # choose 2 for the lifted function and 1 for the default function
 line_search = False  # choose False for Figure 3 and True for Figure 4
 
 coeffs = [-2] + [0] * 15 + [1]
@@ -79,32 +87,59 @@ def newton(G, start, TOL=1.e-6, max_iter=50, line_search=False):
     return x[:2], counter
 
 
-def plot_convergence(coeffs, x_interv, y_interv, res, lift_degree=1,
-                     line_search=False):
-    if (lift_degree == 1):
-        f = create_poly.create_poly(coeffs)
+def _init_worker(coeffs, lift_degree, line_search):
+    """Initialize CasADi function f in each worker."""
+    global _global_coeffs, _global_lift_degree, _global_line_search, _global_f
+    _global_coeffs = coeffs
+    _global_lift_degree = lift_degree
+    _global_line_search = line_search
+    if lift_degree == 1:
+        _global_f = create_poly.create_poly(coeffs)
     else:
-        f = create_poly.create_lifted_poly(coeffs, lift_degree)
+        _global_f = create_poly.create_lifted_poly(coeffs, lift_degree)
 
+
+def _compute_point(args):
+    i, j, re, im, plot_dimy, lift_degree = args
+    start = cs.DM([re, im])
+    if lift_degree > 1:
+        start = initialize.initialize_auto(start, len(_global_coeffs), lift_degree)
+
+    root, steps = newton(_global_f, start, line_search=_global_line_search)
+
+    return (plot_dimy - 1 - j, i, float(root[0]), float(root[1]), steps)
+
+
+def plot_convergence_parallel(coeffs, x_interv, y_interv, res, lift_degree=1,
+                              line_search=False, max_workers=None):
+    """Parallelized version of plot_convergence."""
     plot_dimx = int(np.round(np.abs(x_interv[1] - x_interv[0]) * res) + 1)
     plot_dimy = int(np.round(np.abs(y_interv[1] - y_interv[0]) * res) + 1)
 
     replot = np.zeros((plot_dimy, plot_dimx))
     implot = np.zeros((plot_dimy, plot_dimx))
     stepplot = np.zeros((plot_dimy, plot_dimx))
+
     plot_pointsx = np.linspace(x_interv[0], x_interv[1], plot_dimx)
-    plot_pointsy = np.linspace(y_interv[0], x_interv[1], plot_dimy)
-    for i in tqdm(range(plot_dimx)):
-        re = plot_pointsx[i]
-        for j in range(plot_dimy):
-            im = plot_pointsy[j]
-            start = cs.DM([re, im])
-            if (lift_degree > 1):
-                start = initialize.initialize_auto(start, len(coeffs), lift_degree)
-            root, steps = newton(f, start, line_search=line_search)
-            replot[plot_dimy - 1 - j, i] = float(root[0])
-            implot[plot_dimy - 1 - j, i] = float(root[1])
-            stepplot[plot_dimy - 1 - j, i] = steps
+    plot_pointsy = np.linspace(y_interv[0], y_interv[1], plot_dimy)
+
+    tasks = []
+    for i, re in enumerate(plot_pointsx):
+        for j, im in enumerate(plot_pointsy):
+            tasks.append((i, j, re, im, plot_dimy, lift_degree))
+
+    with ProcessPoolExecutor(
+        max_workers=max_workers,
+        initializer=_init_worker,
+        initargs=(coeffs, lift_degree, line_search)
+    ) as executor:
+        for row, col, re_val, im_val, steps in tqdm(
+            executor.map(_compute_point, tasks), total=len(tasks)
+        ):
+            replot[row, col] = re_val
+            implot[row, col] = im_val
+            stepplot[row, col] = steps
+
     return replot, implot, stepplot
 
 
@@ -126,8 +161,10 @@ def color_grading(roots, replot, implot, TOL=1.e-5):
     return color_plot
 
 
-replot, implot, stepplot = plot_convergence(coeffs, x_interv, y_interv, res,
-                                            lift_degree=lift_degree, line_search=line_search)
+replot, implot, stepplot = plot_convergence_parallel(coeffs, x_interv,
+                                                     y_interv, res,
+                                                     lift_degree=lift_degree,
+                                                     line_search=line_search)
 roots = np.polynomial.polynomial.polyroots(coeffs)
 plot = color_grading(roots, replot, implot)
 

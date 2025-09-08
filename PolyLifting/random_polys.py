@@ -27,8 +27,11 @@ num_reps = 100
 
 np.random.seed(42)
 
+# plot the correspondence between initial contraction and the total number of iterations
+iter_list = []
+contr_list = []
 
-for poly_dim in range(5, 18, 2):
+for poly_dim in range(12, 18, 2):
     print("-" * 20)
     avg_default = 0
     avg_greedy = 0
@@ -60,10 +63,16 @@ for poly_dim in range(5, 18, 2):
         avg_default += len(plot_vals)
         avg_default_size += sol.shape[0] / 2
 
+        contr_list += [plot_vals[1] / plot_vals[0]]
+        iter_list += [len(plot_vals) - 1]
+
         sol, plot_vals = newton.newton(G1, s1)
         plt.plot([i for i in range(1, len(plot_vals) + 1)], plot_vals, label="greedy (b)")
         avg_greedy += len(plot_vals)
         avg_greedy_size += sol.shape[0] / 2
+
+        contr_list += [plot_vals[1] / plot_vals[0]]
+        iter_list += [len(plot_vals) - 1]
 
         sol, plot_vals = newton.newton(G2, s2)
         plt.plot([i for i in range(1, len(plot_vals) + 1)], plot_vals, label="enum (b)")
@@ -89,6 +98,8 @@ for poly_dim in range(5, 18, 2):
             avg_enum_ml = np.inf
 
         plt.legend(loc="upper right")
+        plt.xlabel("iteration")
+        plt.ylabel("residual error")
         plt.yscale("log")
         plt.title("highest degree: " + str(poly_dim - 1))
         plt.pause(plot_delay)
@@ -107,3 +118,7 @@ for poly_dim in range(5, 18, 2):
         f.write(text_out)
         f.close()
 
+    plt.scatter(contr_list, iter_list)
+    plt.show()
+    iter_list = []
+    contr_list = []
