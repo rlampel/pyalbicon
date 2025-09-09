@@ -56,7 +56,7 @@ def newton(G, x_start, opts={}):
     """Newton's method.
 
     Keyword arguments:
-        G       -- casadi function for which Newton's metho is performed
+        G       -- casadi function for which Newton's method is performed
         x_start -- start point of Newton's method
         opts    -- dict that contains further option:
                     - TOL       -- final residual tolerance

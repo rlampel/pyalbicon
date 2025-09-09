@@ -12,7 +12,7 @@ import os
 
 # settings
 log_results = True  # write results into log file
-plot_region = False     # plot the local contraction as a heatmap
+plot_region = True     # plot the local contraction as a heatmap
 plot_auto_lift = True  # plot the current lifting for every step of auto_lifted_newton
 plot_results = True  # plot the convergence comparison for the different algorithms
 plot_delay = 0.25          # how long to show each newton iteration for repeated lifting
@@ -29,7 +29,7 @@ if (log_results):
     f.write(header + "\n")
     f.close()
 
-for p in range(19, 34):
+for p in range(22, 23):
     curr_name = "T" + str(p)
 
     # get problem details
@@ -48,7 +48,7 @@ for p in range(19, 34):
 
     # plot local contraction as a heatmap
     if (plot_region and s_dim == 2):
-        plot_dim = 11       # resolution of the heatmap
+        plot_dim = 201       # resolution of the heatmap
         xlb, xub = -5, 5     # boundaries of the heatmap
         lb, ub = 0, 2        # limit contraction to values in [0,2]
 
