@@ -8,7 +8,7 @@ import os
 
 # Define the neural network
 
-lift = True
+lift = False
 log_results = True
 dirname = os.path.dirname(__file__)
 filename_log = os.path.join(dirname, "nn_results.log")
@@ -219,6 +219,46 @@ def newton(G, x_start, model, opts={}):
     return x, func_arr
 
 
+def efficient_newton(G, x_start, model, opts={}):
+    TOL = opts.get("TOL", 1.e-10)
+    max_iter = opts.get("max_iter", 100)
+
+    x = x_start
+    counter = 0
+
+    func_norm = cs.norm_2(G(x))
+    print("starting with norm: ", func_norm)
+    func_arr = [func_norm]
+
+    nn_rootfinder = cs.rootfinder('nn_root', 'newton', DNet,
+                                  {'line_search': False, 'max_iter': 1, 'error_on_fail': False})
+    while (func_norm > TOL and counter < max_iter):
+        x = nn_rootfinder(x)
+
+        func_val = G(x)
+        func_norm = cs.norm_2(func_val)
+        func_arr += [func_norm]
+        counter += 1
+
+        print("Iteration: ", counter)
+        print("\t norm: ", func_norm)
+        curr_out = compute_final_output(model, x[:784])
+        plot_sol = np.reshape(np.array(x[:784]), (28, 28))
+        plot_sol += plot_test
+        plt.clf()
+        plt.title("Iteration " + str(counter))
+        plt.imshow(plot_sol, cmap="Greys")
+        plt.colorbar()
+        plt.pause(0.2)
+        if (log_results):
+            f = open(filename_log, "a")
+            f.write(str(counter) + " " + str(func_norm) + "\n")
+            f.close()
+        print("Current loss: ", cross_entropy_loss(curr_out, target_index))
+        print("Sigmoid: ", sigmoid(curr_out))
+    return x, func_arr
+
+
 model = NeuralNet()
 filename_weights = os.path.join(dirname, "trained_weights/mnist_model.pth")
 model.load_state_dict(torch.load(filename_weights))
@@ -247,7 +287,8 @@ else:
     # Create unlifted problem
     DNet = create_adversary(model, target_index, False)
 
-sol, _ = newton(DNet, start, model)
+sol, _ = efficient_newton(DNet, start, model)
+
 print(sol)
 plot_sol = np.reshape(np.array(sol[:784]), (28, 28))
 plt.clf()

@@ -14,7 +14,7 @@ def newton(G, x_start, opts={}):
                     - log_type  -- "res" to return the list of residual norms
                                    else the iterates themselves are returned
     """
-    TOL = opts.get("TOL", 1.e-12)
+    TOL = opts.get("TOL", 1.e-8)
     max_iter = opts.get("max_iter", 100)
     verbose = opts.get("verbose", False)
     log_type = opts.get("log_type", "res")

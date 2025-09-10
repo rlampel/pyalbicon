@@ -9,6 +9,7 @@ from concurrent.futures import ProcessPoolExecutor
 _global_ode = None
 _global_R = None
 _global_problem = None
+_global_max_iter = 20
 
 
 def _init_worker(ode, R):
@@ -29,15 +30,14 @@ def _compute_point_default(args):
     x_start = cs.DM([x1, x2])
 
     B = create_bvp.create_bvp(_global_ode, _global_R, {"time": list(time_points)}, x_dim)
-    _, func_arr = newton.newton(B, x_start, {"max_iter": 1, "verbose": False})
-    if len(func_arr) > 1:
-        contr = func_arr[1] / func_arr[0]
-    else:
-        contr = np.inf
+    _, func_arr = newton.newton(B, x_start, {"max_iter": _global_max_iter, "verbose": False})
 
-    if np.isnan(contr):
-        contr = np.inf
-    return (plot_dim - 1 - i, j, contr)
+    final_res = func_arr[-1]
+    num_iter = len(func_arr)
+
+    if np.isnan(final_res) or final_res == np.inf:
+        num_iter = _global_max_iter
+    return (plot_dim - 1 - i, j, num_iter)
 
 
 def plot_heatmap_default(ode, R, xlb, xub, plot_dim, max_workers=None):
@@ -63,8 +63,8 @@ def plot_heatmap_default(ode, R, xlb, xub, plot_dim, max_workers=None):
             tasks.append((i, j, x1, x2, time_points, plot_dim, x_dim))
 
     with ProcessPoolExecutor(max_workers=max_workers, initializer=_init_worker, initargs=(ode, R)) as executor:
-        for row, col, contr in tqdm(executor.map(_compute_point_default, tasks), total=len(tasks)):
-            plot_matrix[row, col] = contr
+        for row, col, num_iter in tqdm(executor.map(_compute_point_default, tasks), total=len(tasks)):
+            plot_matrix[row, col] = num_iter
 
     return plot_matrix
 
@@ -91,16 +91,14 @@ def _compute_point_graph(args):
     s_best = initialization.select_states(s_init, 2, lifting_points)
     B = create_bvp.create_bvp(_global_ode, _global_R,
                               {"time": time_points, "lift": lifting_points}, x_dim)
-    _, func_arr = newton.newton(B, s_best, {"max_iter": 1})
-    # contr = compute_contraction(B, s_best, s_next)
-    if len(func_arr) > 1:
-        contr = func_arr[1] / func_arr[0]
-    else:
-        contr = np.inf
+    _, func_arr = newton.newton(B, s_best, {"max_iter": _global_max_iter})
 
-    if np.isnan(contr):
-        contr = np.inf
-    return (plot_dim - 1 - i, j, contr)
+    final_res = func_arr[-1]
+    num_iter = len(func_arr)
+
+    if np.isnan(final_res) or final_res == np.inf:
+        num_iter = _global_max_iter
+    return (plot_dim - 1 - i, j, num_iter)
 
 
 def plot_heatmap_graph(ode, R, xlb, xub, plot_dim, max_workers=None):
@@ -127,8 +125,8 @@ def plot_heatmap_graph(ode, R, xlb, xub, plot_dim, max_workers=None):
             tasks.append((i, j, x1, x2, time_points, plot_dim, x_dim))
 
     with ProcessPoolExecutor(max_workers=max_workers, initializer=_init_worker, initargs=(ode, R)) as executor:
-        for row, col, contr in tqdm(executor.map(_compute_point_graph, tasks), total=len(tasks)):
-            plot_matrix[row, col] = contr
+        for row, col, num_iter in tqdm(executor.map(_compute_point_graph, tasks), total=len(tasks)):
+            plot_matrix[row, col] = num_iter
 
     return plot_matrix
 
@@ -147,16 +145,16 @@ def _compute_point_graph_init(args):
     # compute contraction
     lifting_points = initialization.convert_lifting(graph_lift, time_points)
     s_best = initialization.select_states(start_vals, 2, lifting_points)
-    opts = {"verbose": False, "max_iter": 1, "plot": False}
+    opts = {"verbose": False, "max_iter": _global_max_iter, "plot": False}
     func_arr = newton.auto_lifted_newton(_global_problem, lifting_points, s_best, opts)
-    if (len(func_arr) > 1):
-        contr = func_arr[1] / func_arr[0]
-    else:
-        contr = np.inf
 
-    if np.isnan(contr):
-        contr = np.inf
-    return (plot_dim - 1 - i, j, contr)
+    final_res = func_arr[-1]
+    num_iter = len(func_arr)
+
+    if np.isnan(final_res) or final_res == np.inf:
+        num_iter = _global_max_iter
+
+    return (plot_dim - 1 - i, j, num_iter)
 
 
 def plot_heatmap_auto_const(problem, xlb, xub, plot_dim, max_workers=None):
@@ -183,7 +181,7 @@ def plot_heatmap_auto_const(problem, xlb, xub, plot_dim, max_workers=None):
             tasks.append((i, j, x1, x2, time_points, plot_dim, x_dim))
 
     with ProcessPoolExecutor(max_workers=max_workers, initializer=_init_problem, initargs=[problem]) as executor:
-        for row, col, contr in tqdm(executor.map(_compute_point_graph_init, tasks), total=len(tasks)):
-            plot_matrix[row, col] = contr
+        for row, col, num_iter in tqdm(executor.map(_compute_point_graph_init, tasks), total=len(tasks)):
+            plot_matrix[row, col] = num_iter
     return plot_matrix
 

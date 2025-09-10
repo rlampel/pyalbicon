@@ -54,7 +54,7 @@ def create_bvp(ode, R, grid, x_dim):
 
 
 def create_condensing_bvp(ode, R, grid, x_dim):
-    """Create a boundary value function from given ODE, boundary function R, and time grid.
+    """Create a list of component functions from given ODE, boundary function R, and time grid.
 
     Keyword arguments:
         ode     -- casadi function that describes the ODE
@@ -89,8 +89,8 @@ def create_condensing_bvp(ode, R, grid, x_dim):
 
     # add the integration up to the final time point to R
     S0 = cs.MX.sym('S0', x_dim)
-    R = cs.Function('RF', [S0, Sk], [R(S0, Sk_temp)])
+    RF = cs.Function('RF', [S0, Sk], [R(S0, Sk_temp)])
 
-    return func_list, R
+    return func_list, RF
 
 

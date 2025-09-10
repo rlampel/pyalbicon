@@ -10,7 +10,7 @@ import os
 log_results = False  # write results to a file
 lift_degree = 2  # degree of the component functions
 plot_delay = 0.01  # how many seconds to show the results
-TOL = 1.e-12  # final residual tolerance
+TOL = 1.e-8  # final residual tolerance
 
 if (log_results):
     dirname = os.path.dirname(__file__)
@@ -23,15 +23,17 @@ if (log_results):
 
 start = cs.DM([5., 0.])
 
-num_reps = 100
+num_reps = 50
 
 np.random.seed(42)
 
 # plot the correspondence between initial contraction and the total number of iterations
-iter_list = []
-contr_list = []
+iter_list_default = []
+contr_list_default = []
+iter_list_greedy = []
+contr_list_greedy = []
 
-for poly_dim in range(12, 18, 2):
+for poly_dim in range(5, 18, 2):
     print("-" * 20)
     avg_default = 0
     avg_greedy = 0
@@ -45,8 +47,8 @@ for poly_dim in range(12, 18, 2):
     avg_greedy_ml_size = 0
     avg_enum_ml_size = 0
     for i in range(num_reps):
-        neg_roots = -np.random.rand(poly_dim - 2) * 1
-        pos_root = np.random.rand(1) * 1
+        neg_roots = -np.random.rand(poly_dim - 2) * 1.
+        pos_root = np.random.rand(1) * 1.
         roots = np.append(neg_roots, pos_root)
 
         coeffs = create_poly.create_coeffs(roots)
@@ -63,16 +65,16 @@ for poly_dim in range(12, 18, 2):
         avg_default += len(plot_vals)
         avg_default_size += sol.shape[0] / 2
 
-        contr_list += [plot_vals[1] / plot_vals[0]]
-        iter_list += [len(plot_vals) - 1]
+        contr_list_default += [plot_vals[1] / plot_vals[0]]
+        iter_list_default += [len(plot_vals) - 1]
 
         sol, plot_vals = newton.newton(G1, s1)
         plt.plot([i for i in range(1, len(plot_vals) + 1)], plot_vals, label="greedy (b)")
         avg_greedy += len(plot_vals)
         avg_greedy_size += sol.shape[0] / 2
 
-        contr_list += [plot_vals[1] / plot_vals[0]]
-        iter_list += [len(plot_vals) - 1]
+        contr_list_greedy += [plot_vals[1] / plot_vals[0]]
+        iter_list_greedy += [len(plot_vals) - 1]
 
         sol, plot_vals = newton.newton(G2, s2)
         plt.plot([i for i in range(1, len(plot_vals) + 1)], plot_vals, label="enum (b)")
@@ -118,7 +120,11 @@ for poly_dim in range(12, 18, 2):
         f.write(text_out)
         f.close()
 
-    plt.scatter(contr_list, iter_list)
+    plt.scatter(contr_list_default, iter_list_default, marker="x")
+    plt.scatter(contr_list_greedy, iter_list_greedy, marker=".")
+    plt.xlim(left=0, right=0.5)
     plt.show()
-    iter_list = []
-    contr_list = []
+    iter_list_default = []
+    contr_list_default = []
+    iter_list_greedy = []
+    contr_list_greedy = []
