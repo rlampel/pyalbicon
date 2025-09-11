@@ -8,6 +8,7 @@ import os
 
 
 log_results = False  # write results to a file
+log_contraction = True  # log the initial contractions and number of iterations
 lift_degree = 2  # degree of the component functions
 plot_delay = 0.01  # how many seconds to show the results
 TOL = 1.e-8  # final residual tolerance
@@ -23,7 +24,7 @@ if (log_results):
 
 start = cs.DM([5., 0.])
 
-num_reps = 50
+num_reps = 100
 
 np.random.seed(42)
 
@@ -124,6 +125,29 @@ for poly_dim in range(5, 18, 2):
     plt.scatter(contr_list_greedy, iter_list_greedy, marker=".")
     plt.xlim(left=0, right=0.5)
     plt.show()
+
+    if (log_contraction):
+        dirname = os.path.dirname(__file__)
+
+        for i in range(2):
+            curr_name = "poly_data/contr/" + i * "lift_" + "contr_" + str(poly_dim) + ".dat"
+            filename = os.path.join(dirname, curr_name)
+
+            if i == 0:
+                contr_list = contr_list_default
+                iter_list = iter_list_default
+            else:
+                contr_list = contr_list_greedy
+                iter_list = iter_list_greedy
+
+            f = open(filename, "w")
+            log_header = "num_iter | contraction \n"
+            log_data = ""
+            for j in range(len(contr_list)):
+                log_data += str(iter_list[j]) + " " + str(contr_list[j]) + "\n"
+            f.write(log_header + log_data)
+            f.close()
+
     iter_list_default = []
     contr_list_default = []
     iter_list_greedy = []

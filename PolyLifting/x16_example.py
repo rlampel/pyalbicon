@@ -12,7 +12,7 @@ coeffs = [-2] + [0] * 15 + [1]
 num_reps = 1
 
 # settings
-log_results = False  # chose whether to write the iterations to a file
+log_results = True  # chose whether to write the iterations to a file
 log_type = "res"  # choose "res" to plot the residual convergence
 # log_type = "step"  # otherwise the convergence w.r.t. step lenghts is plotted
 newton_opts = {"verbose": False, "max_iter": 100, "log_type": log_type}

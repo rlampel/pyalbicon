@@ -20,28 +20,30 @@ def newton(G, x_start, opts={}):
     log_type = opts.get("log_type", "res")
 
     x = x_start
-    dim_x = x_start.shape[0]
     counter = 0
-    y = cs.MX.sym('y', dim_x)
 
     func_norm = cs.norm_2(G(x))
     func_arr = []
     if (log_type == "res"):
         func_arr += [func_norm]
     x_arr = [x]
-    DG = cs.Function('J', [y], [cs.jacobian(G(y), y)], ['x_in'], ['J'])
+    # newton_step = cs.rootfinder('newton_step', 'newton', G,
+    #                             {'line_search': False, 'max_iter': 1, 'error_on_fail': False})
+    newton_step = cs.rootfinder('newton_step', 'fast_newton', G,
+                                {'max_iter': 1, 'error_on_fail': False})
     while (func_norm > TOL and counter < max_iter):
-        dx = - cs.solve(DG(x), G(x))
+        x_new = newton_step(x)
         counter += 1
-        x = x + dx
-        x_arr += [x]
-        func_norm = cs.norm_2(G(x))
+        x_arr += [x_new]
+        func_norm = cs.norm_2(G(x_new))
 
         if (log_type == "res"):
             func_arr += [func_norm]
         else:
+            dx = x_new - x
             func_arr += [dx]
 
+        x = x_new
         if (verbose):
             print("Iteration: ", counter, "\t", x)
     if (log_type == "res"):
