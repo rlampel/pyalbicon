@@ -15,9 +15,9 @@ import os
 log_results = True  # write results into log file
 plot_contr_region = False  # plot the local contraction as a heatmap
 plot_iter_region = False  # plot the number of required iterations as a heatmap
-plot_auto_lift = True  # plot the current lifting for every step of auto_lifted_newton
+plot_auto_lift = False  # plot the current lifting for every step of auto_lifted_newton
 plot_results = True  # plot the convergence comparison for the different algorithms
-plot_delay = 0.25          # how long to show each newton iteration for repeated lifting
+plot_delay = 0.1          # how long to show each newton iteration for repeated lifting
 result_delay = 2        # how long to show the convergence plots
 verbose = False        # print out all Newton iterations
 
@@ -31,7 +31,7 @@ if (log_results):
     f.write(header + "\n")
     f.close()
 
-for p in range(19, 34):
+for p in range(30, 31):
     curr_name = "T" + str(p)
 
     # get problem details
@@ -162,16 +162,10 @@ for p in range(19, 34):
                                          s_dim, verbose=False)
     grid["lift"] = initialization.convert_lifting(graph_lift, time_points)
     lift_init = initialization.select_states(s_init, s_dim, grid["lift"])
-    # replace by condensed newton
-    from utils import condensing
-    if lift_init.shape[0] > s_dim:
-        func_list, RF = create_bvp.create_condensing_bvp(ode, R, grid, s_dim)
-        _, func_arr = condensing.condensed_newton(lift_init[:s_dim], lift_init[s_dim:],
-                                                  func_list, RF)
-    else:
-        B_graph_lift = create_bvp.create_bvp(ode, R, grid, s_dim)
-        _, func_arr = newton.newton(B_graph_lift, lift_init,
-                                    opts={"verbose": verbose})
+
+    B_graph_lift = create_bvp.create_bvp(ode, R, grid, s_dim)
+    _, func_arr = newton.newton(B_graph_lift, lift_init,
+                                opts={"verbose": verbose})
     elapsed = timeit.default_timer() - start_time
     print("Graph Lifting took ", elapsed)
 

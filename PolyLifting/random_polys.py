@@ -7,8 +7,8 @@ import utils.greedy_lift as greedy_lift
 import os
 
 
-log_results = False  # write results to a file
-log_contraction = True  # log the initial contractions and number of iterations
+log_results = True  # write results to a file
+log_contraction = False  # log the initial contractions and number of iterations
 lift_degree = 2  # degree of the component functions
 plot_delay = 0.01  # how many seconds to show the results
 TOL = 1.e-8  # final residual tolerance
@@ -144,7 +144,7 @@ for poly_dim in range(5, 18, 2):
             log_header = "num_iter | contraction \n"
             log_data = ""
             for j in range(len(contr_list)):
-                log_data += str(iter_list[j]) + " " + str(contr_list[j]) + "\n"
+                log_data += str(contr_list[j]) + " " + str(iter_list[j]) + "\n"
             f.write(log_header + log_data)
             f.close()
 

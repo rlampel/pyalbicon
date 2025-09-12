@@ -15,7 +15,7 @@ def newton(G, x_start, opts={}):
                     - verbose   -- print outputs or not
     """
     TOL = opts.get("TOL", 1.e-8)
-    max_iter = opts.get("max_iter", 50)
+    max_iter = opts.get("max_iter", 500)
     verbose = opts.get("verbose", False)
 
     x = x_start
@@ -55,7 +55,7 @@ def auto_lifted_newton(problem, lift_init=None, s_init=None, opts={}):
                     - plot_delay -- how long to show the plot in every iteration
     """
     TOL = opts.get("TOL", 1.e-8)
-    max_iter = opts.get("max_iter", 50)
+    max_iter = opts.get("max_iter", 500)
     verbose = opts.get("verbose", False)
     plot_iter = opts.get("plot", True)
     plot_delay = opts.get("plot_delay", 1)

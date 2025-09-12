@@ -11,7 +11,7 @@ import os
 lift = False
 log_results = True
 dirname = os.path.dirname(__file__)
-filename_log = os.path.join(dirname, "nn_results.log")
+filename_log = os.path.join(dirname, "nn_results" + "_lift" * lift + ".log")
 
 if (log_results):
     f = open(filename_log, "w")
@@ -230,11 +230,16 @@ def auto_lifted_newton(G, x_start, model, opts={}):
 
         # test whether FSInit is better
         func_val = G(x)
+        func_norm = cs.norm_2(func_val)
+
         x_fs = create_lifted_init(model, x[:784])
         fs_val = G(x_fs)
-        if cs.norm_2(func_val) > cs.norm_2(fs_val):
+        fs_norm = cs.norm_2(fs_val)
+
+        if func_norm > fs_norm:
             print("REPLACE BY FSINIT")
             x = x_fs
+            func_norm = fs_norm
 
         func_norm = cs.norm_2(func_val)
         func_arr += [func_norm]
@@ -274,7 +279,7 @@ start = cs.DM([0.1] * 784)
 
 X = cs.MX.sym("X", 784)
 Net = create_adversary(model, target_index, False)
-print("starting probabilities: ", sigmoid(compute_final_output(model, 0 * start)[-10:]))
+print("starting probabilities: ", sigmoid(compute_final_output(model, start)[-10:]))
 
 
 if (lift is True):
@@ -299,8 +304,8 @@ plt.colorbar()
 plt.show()
 # evaluate final result:
 sol = sol[:784]
-sol += test
-out = create_lifted_init(model, sol)
+# sol += test
+out = compute_final_output(model, sol)
 net_out = out[-10:]
 print("Final output: \t", net_out)
 for i in range(10):

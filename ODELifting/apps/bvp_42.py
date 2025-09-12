@@ -19,12 +19,13 @@ class Problem(base_class.BVP):
         # Model equations
         xdot = cs.DM([])
         np.random.seed(self.seed)
-        for i in range(self.x_dim):
-            b = cs.DM(np.random.rand(self.x_dim))
-            b = cs.DM([1.] * self.x_dim) - 2 * b
-            c = 1 - 2 * float(np.random.rand(1))
-            xdot_i = b.T @ x + c
-            xdot = cs.vertcat(xdot, xdot_i)
+
+        A = cs.DM(np.random.rand(self.x_dim, self.x_dim))
+        A = cs.DM.ones(self.x_dim, self.x_dim) - 2 * A
+
+        b = cs.DM(np.random.rand(self.x_dim))
+        b = cs.DM.ones(self.x_dim) - 2 * b
+        xdot = A @ x + b
 
         # Objective term
         ode = {'x': x, 'ode': xdot, 't': t}
@@ -48,6 +49,6 @@ class Problem(base_class.BVP):
     def get_grid_details(self):
         min_t = 0
         max_t = 10
-        num_lifts = 20
+        num_lifts = 10
         return min_t, max_t, num_lifts
 

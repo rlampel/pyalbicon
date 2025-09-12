@@ -4,19 +4,32 @@ import utils.initialization as initialization
 import utils.newton as newton
 import utils.lifting as lifting
 import apps.bvp_42 as random_problem
+import os
 
 
 # settings
 log_results = True  # write results into log file
+delete_log = False  # erase all previous entries in the log file
 plot_auto_lift = True  # plot the current lifting for every step of auto_lifted_newton
 plot_results = True  # plot the convergence comparison for the different algorithms
 plot_delay = 0.25          # how long to show each newton iteration for repeated lifting
 result_delay = 2        # how long to show the convergence plots
 verbose = True        # print out all Newton iterations
 
-dims = [10, 15, 20, 25]
+dims = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 num_reps = 5
 counter = 0
+
+
+# file where the results will be saved
+dirname = os.path.dirname(__file__)
+filename = os.path.join(dirname, "results/random_ode_benchmark.log")
+
+if (log_results and delete_log):
+    f = open(filename, "w")
+    header = "dim | def. | Alg. 3 | rep. Alg. 3 | Alg. 5 + rep. Alg. 3"
+    f.write(header + "\n")
+    f.close()
 
 for curr_dim in dims:
     for rep in range(num_reps):
@@ -42,7 +55,7 @@ for curr_dim in dims:
         grid["lift"] = [0 for i in range(len(time_points))]
         B_def = create_bvp.create_bvp(ode, R, grid, s_dim)
         _, func_arr = newton.newton(B_def, init["s_start"],
-                                    opts={"verbose": verbose})
+                                    opts={"verbose": verbose, "max_iter": 20})
         default_conv = [float(el) for el in func_arr]
 
         # lift at every point to compute all possible steps
@@ -91,6 +104,19 @@ for curr_dim in dims:
                                               "plot": plot_auto_lift,
                                               "plot_delay": plot_delay})
         heur_auto_conv = [float(el) for el in func_arr]
+
+        if (log_results):
+            f = open(filename, "a")
+            def_iter = str(len(default_conv) - 1)
+            fs_iter = str(len(graph_conv) - 1)
+            auto_iter = str(len(auto_conv) - 1)
+            heur_auto_iter = str(len(heur_auto_conv) - 1)
+            start_log = str(init["s_start"])
+            table_list = "dim. " + str(curr_dim)
+            table_list += "$ & $" + def_iter + "$ & $" + fs_iter + "$ & $" + auto_iter
+            table_list += "$ & $" + heur_auto_iter + "$ \\\\ \n"
+            f.write(table_list)
+            f.close()
 
         if (plot_results):
             plt.plot([i for i in range(len(default_conv))], default_conv, label="no lifting")

@@ -44,7 +44,7 @@ class Problem(base_class.BVP):
 
     def get_init(self):
         init = {}
-        init["s_start"] = cs.DM([-1, -0.95])
+        init["s_start"] = cs.DM([1., -1.])
         init["s_dim"] = self.x_dim
         return init
 
