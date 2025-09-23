@@ -31,7 +31,7 @@ if (log_results):
     f.write(header + "\n")
     f.close()
 
-for p in range(30, 31):
+for p in range(19, 34):
     curr_name = "T" + str(p)
 
     # get problem details
@@ -129,80 +129,87 @@ for p in range(30, 31):
         colorbar.set_ticklabels([0, 5, 10, 15, r"$\geq$20"], fontsize=14)
         plt.show()
 
+    # -------------------------------------------------------------------------------
     # create unlifted version
     if (verbose):
         print("----" * 10)
         print("UNLIFTED:")
+
     grid["lift"] = [0 for i in range(len(time_points))]
 
     start_time = timeit.default_timer()
     B_def = create_bvp.create_bvp(ode, R, grid, s_dim)
     _, func_arr = newton.newton(B_def, init["s_start"],
                                 opts={"verbose": verbose})
-    elapsed = timeit.default_timer() - start_time
-    print("-" * 20 + "\nBVP" + str(p))
-    print("No lifting took", elapsed)
+
+    def_time = timeit.default_timer() - start_time
     default_conv = [float(el) for el in func_arr]
 
+    # -------------------------------------------------------------------------------
+    # graph-based lifting
+    if (verbose):
+        print("----" * 10)
+        print("GRAPH LIFTING:")
+
+    start_time = timeit.default_timer()
     # lift at every point to compute all possible steps
     s_init = initialization.initialize(init, grid, ode)
     # s_init = initialization.initialize_lin(init, grid)
     grid["lift"] = [1 for i in range(len(time_points))]
 
-    start_time = timeit.default_timer()
+    # determine best lifting and perform first step
     B_lift_all = create_bvp.create_bvp(ode, R, grid, s_dim)
-    first_iter, _ = newton.newton(B_lift_all, s_init,
-                                  opts={"verbose": False, "max_iter": 1})
+    first_iter, first_norm = newton.newton(B_lift_all, s_init,
+                                           opts={"verbose": False, "max_iter": 1})
 
-    # graph-based lifting
-    if (verbose):
-        print("----" * 10)
-        print("GRAPH LIFTING:")
     graph_lift = lifting.best_graph_lift(ode, R, time_points, first_iter, time_points,
                                          s_dim, verbose=False)
     grid["lift"] = initialization.convert_lifting(graph_lift, time_points)
-    lift_init = initialization.select_states(s_init, s_dim, grid["lift"])
+    lift_init = initialization.select_states(first_iter, s_dim, grid["lift"])
 
     B_graph_lift = create_bvp.create_bvp(ode, R, grid, s_dim)
     _, func_arr = newton.newton(B_graph_lift, lift_init,
                                 opts={"verbose": verbose})
-    elapsed = timeit.default_timer() - start_time
-    print("Graph Lifting took ", elapsed)
+    func_arr = [first_norm[0]] + func_arr
+    graph_time = timeit.default_timer() - start_time
 
     graph_conv = [float(el) for el in func_arr]
 
+    # -------------------------------------------------------------------------------
     # best lifting for every iteration
     if (verbose):
         print("----" * 10)
         print("AUTOMATIC LIFTING:")
+
     start_time = timeit.default_timer()
     func_arr = newton.auto_lifted_newton(problem,
                                          opts={"verbose": verbose,
                                                "plot": plot_auto_lift,
                                                "plot_delay": plot_delay})
-    elapsed = timeit.default_timer() - start_time
-    print("Auto Lifting took ", elapsed)
+    auto_time = timeit.default_timer() - start_time
     auto_conv = [float(el) for el in func_arr]
 
+    # -------------------------------------------------------------------------------
     # heuristic lifting
+    if (verbose):
+        print("----" * 10)
+        print("HEURISTIC + AUTO:")
+
     # constant initialization for all variables
-    start_vals = initialization.initialize_lin(init, grid)
     start_time = timeit.default_timer()
+    start_vals = initialization.initialize_lin(init, grid)
     heur_lift = lifting.best_graph_lift(ode, R, time_points, start_vals, time_points, s_dim)
     grid["lift"] = initialization.convert_lifting(heur_lift, time_points)
     s_best = initialization.select_states(start_vals, s_dim, grid["lift"])
 
     # graph based heuristic lifting
-    if (verbose):
-        print("----" * 10)
-        print("HEURISTIC + AUTO:")
     func_arr = newton.auto_lifted_newton(problem, grid["lift"], s_best,
                                          {"verbose": verbose,
                                           "plot": plot_auto_lift,
                                           "plot_delay": plot_delay})
-    elapsed = timeit.default_timer() - start_time
-    print("Heuristic Auto Lifting took ", elapsed)
+    heur_auto_time = timeit.default_timer() - start_time
     heur_auto_conv = [float(el) for el in func_arr]
+    # -------------------------------------------------------------------------------
 
     if (log_results):
         f = open(filename, "a")
@@ -212,8 +219,10 @@ for p in range(30, 31):
         heur_auto_iter = str(len(heur_auto_conv) - 1)
         start_log = str(init["s_start"])
         table_list = curr_name + " & " + str(problem.lamb) + " & $" + start_log + "$ & $"
-        table_list += def_iter + "$ & $" + fs_iter + "$ & $" + auto_iter
-        table_list += "$ & $" + heur_auto_iter + "$ \\\\ \n"
+        table_list += def_iter + " \; (" + f"{def_time:.3f}" + ")$ & $"
+        table_list += fs_iter + " \; (" + f"{graph_time:.3f}" + ")$ & $"
+        table_list += auto_iter + " \; (" + f"{auto_time:.3f}" + ")$ & $"
+        table_list += heur_auto_iter + " \; (" + f"{heur_auto_time:.3f}" + ")$ \\\\ \n"
         f.write(table_list)
         f.close()
 

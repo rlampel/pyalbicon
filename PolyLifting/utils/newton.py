@@ -27,10 +27,10 @@ def newton(G, x_start, opts={}):
     if (log_type == "res"):
         func_arr += [func_norm]
     x_arr = [x]
-    # newton_step = cs.rootfinder('newton_step', 'newton', G,
-    #                             {'line_search': False, 'max_iter': 1, 'error_on_fail': False})
-    newton_step = cs.rootfinder('newton_step', 'fast_newton', G,
-                                {'max_iter': 1, 'error_on_fail': False})
+    newton_step = cs.rootfinder('newton_step', 'newton', G,
+                                {'line_search': False, 'max_iter': 1, 'error_on_fail': False})
+    # newton_step = cs.rootfinder('newton_step', 'fast_newton', G,
+    #                             {'max_iter': 1, 'error_on_fail': False})
     while (func_norm > TOL and counter < max_iter):
         x_new = newton_step(x)
         counter += 1

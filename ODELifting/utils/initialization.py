@@ -119,7 +119,7 @@ def compute_all_states(init, grid, ode):
     return all_states
 
 
-def convert_lifting(input_lift, time_points):
+def convert_lifting(input_lift, time_points, tol=1e-8):
     """Converts a lifting given by the time points into a list of binary decisions for every
     lifting point.
 
@@ -127,18 +127,12 @@ def convert_lifting(input_lift, time_points):
         input_lift  -- list containing the lifting points as time points
         time_points -- list of all possible lifting points as time points
     """
-    output_lift = []
-    for el1 in time_points:
-        flag = False
-        for el2 in input_lift:
-            if (np.isclose(el1, el2)):
-                flag = True
-                break
-        if (flag):
-            output_lift += [1]
-        else:
-            output_lift += [0]
-    return output_lift
+    input_lift = np.asarray(input_lift)
+    time_points = np.asarray(time_points)
+
+    # Compare each time_point against all input_lift values
+    mask = np.any(np.isclose(time_points[:, None], input_lift[None, :], atol=tol), axis=1)
+    return mask.astype(int).tolist()
 
 
 def select_states(s_init, s_dim, lifting_points):

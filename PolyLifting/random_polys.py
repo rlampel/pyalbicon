@@ -22,19 +22,13 @@ if (log_results):
     f.write(log_header)
     f.close()
 
-start = cs.DM([5., 0.])
 
 num_reps = 100
 
 np.random.seed(42)
 
-# plot the correspondence between initial contraction and the total number of iterations
-iter_list_default = []
-contr_list_default = []
-iter_list_greedy = []
-contr_list_greedy = []
-
 for poly_dim in range(5, 18, 2):
+    # plot the correspondence between initial contraction and the total number of iterations
     print("-" * 20)
     avg_default = 0
     avg_greedy = 0
@@ -42,12 +36,15 @@ for poly_dim in range(5, 18, 2):
     avg_greedy_ml = 0
     avg_enum_ml = 0
 
-    avg_default_size = 0
-    avg_greedy_size = 0
-    avg_enum_size = 0
-    avg_greedy_ml_size = 0
-    avg_enum_ml_size = 0
+    avg_default_contr = 0
+    avg_greedy_contr = 0
+    avg_enum_contr = 0
+    avg_greedy_ml_contr = 0
+    avg_enum_ml_contr = 0
+
     for i in range(num_reps):
+        start = cs.DM([5, 0.])
+
         neg_roots = -np.random.rand(poly_dim - 2) * 1.
         pos_root = np.random.rand(1) * 1.
         roots = np.append(neg_roots, pos_root)
@@ -63,30 +60,25 @@ for poly_dim in range(5, 18, 2):
 
         sol, plot_vals = newton.newton(F, start)
         plt.plot([i for i in range(1, len(plot_vals))], plot_vals[1:], label="default")
-        avg_default += len(plot_vals)
-        avg_default_size += sol.shape[0] / 2
-
-        contr_list_default += [plot_vals[1] / plot_vals[0]]
-        iter_list_default += [len(plot_vals) - 1]
+        avg_default += len(plot_vals) - 1
+        init_res = plot_vals[0]  # initial residual at start point
+        avg_default_contr += plot_vals[1] / init_res
 
         sol, plot_vals = newton.newton(G1, s1)
         plt.plot([i for i in range(1, len(plot_vals) + 1)], plot_vals, label="greedy (b)")
         avg_greedy += len(plot_vals)
-        avg_greedy_size += sol.shape[0] / 2
-
-        contr_list_greedy += [plot_vals[1] / plot_vals[0]]
-        iter_list_greedy += [len(plot_vals) - 1]
+        avg_greedy_contr += plot_vals[0] / init_res
 
         sol, plot_vals = newton.newton(G2, s2)
         plt.plot([i for i in range(1, len(plot_vals) + 1)], plot_vals, label="enum (b)")
         avg_enum += len(plot_vals)
-        avg_enum_size += sol.shape[0] / 2
+        avg_enum_contr += plot_vals[0] / init_res
 
         sol, plot_vals = newton.newton(G1m, s1m)
         plt.plot([i for i in range(1, len(plot_vals) + 1)], plot_vals,
                  label="greedy (a)", linestyle="--")
         avg_greedy_ml += len(plot_vals)
-        avg_greedy_ml_size += sol.shape[0] / 2
+        avg_greedy_ml_contr += plot_vals[0] / init_res
         final_val = float(plot_vals[-1])
         if (final_val >= TOL or np.isnan(final_val)):
             avg_greedy_ml = np.inf
@@ -95,7 +87,7 @@ for poly_dim in range(5, 18, 2):
         plt.plot([i for i in range(1, len(plot_vals) + 1)], plot_vals,
                  label="enum (a)", linestyle="--")
         avg_enum_ml += len(plot_vals)
-        avg_enum_ml_size += sol.shape[0] / 2
+        avg_enum_ml_contr += plot_vals[0] / init_res
         final_val = float(plot_vals[-1])
         if (final_val >= TOL or np.isnan(final_val)):
             avg_enum_ml = np.inf
@@ -109,11 +101,11 @@ for poly_dim in range(5, 18, 2):
         plt.clf()
 
     text_out = f"{poly_dim - 1} & "
-    text_out += f"{avg_default / num_reps} & "
-    text_out += f"{avg_greedy / num_reps} & "
-    text_out += f"{avg_enum / num_reps} & "
-    text_out += f"{avg_greedy_ml / num_reps} & "
-    text_out += f"{avg_enum_ml / num_reps} \\\\ \n "
+    text_out += f"{avg_default / num_reps} ({avg_default_contr / num_reps:.3f}) & "
+    text_out += f"{avg_greedy / num_reps} ({avg_greedy_contr / num_reps:.3f}) & "
+    text_out += f"{avg_enum / num_reps} ({avg_enum_contr / num_reps:.3f}) & "
+    text_out += f"{avg_greedy_ml / num_reps} ({avg_greedy_ml_contr / num_reps:.3f}) & "
+    text_out += f"{avg_enum_ml / num_reps} ({avg_enum_ml_contr / num_reps:.3f}) \\\\ \n "
 
     print(text_out)
     if (log_results):
@@ -121,34 +113,3 @@ for poly_dim in range(5, 18, 2):
         f.write(text_out)
         f.close()
 
-    plt.scatter(contr_list_default, iter_list_default, marker="x")
-    plt.scatter(contr_list_greedy, iter_list_greedy, marker=".")
-    plt.xlim(left=0, right=0.5)
-    plt.show()
-
-    if (log_contraction):
-        dirname = os.path.dirname(__file__)
-
-        for i in range(2):
-            curr_name = "poly_data/contr/" + i * "lift_" + "contr_" + str(poly_dim) + ".dat"
-            filename = os.path.join(dirname, curr_name)
-
-            if i == 0:
-                contr_list = contr_list_default
-                iter_list = iter_list_default
-            else:
-                contr_list = contr_list_greedy
-                iter_list = iter_list_greedy
-
-            f = open(filename, "w")
-            log_header = "num_iter | contraction \n"
-            log_data = ""
-            for j in range(len(contr_list)):
-                log_data += str(contr_list[j]) + " " + str(iter_list[j]) + "\n"
-            f.write(log_header + log_data)
-            f.close()
-
-    iter_list_default = []
-    contr_list_default = []
-    iter_list_greedy = []
-    contr_list_greedy = []

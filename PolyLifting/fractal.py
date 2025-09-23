@@ -21,65 +21,24 @@ rc('text', usetex=True)
 x_interv = [-1, 1]  # range of real values
 y_interv = [-1, 1]  # range of imaginary values
 res = 100  # number of sampling points in interval [0,1]
-lift_degree = 2  # choose 2 for the lifted function and 1 for the default function
+lift_degree = 1  # choose 2 for the lifted function and 1 for the default function
 line_search = False  # choose False for Figure 3 and True for Figure 4
 
 coeffs = [-2] + [0] * 15 + [1]
-
-
-def trust_region(G, x, dx, start_mu=1, TOL=1.e-6):
-    lam_min = 1.e-16
-    mu = start_mu
-    if (np.isnan(mu)):
-        mu = np.inf
-        lam = 1
-    else:
-        lam = np.min([1, mu])
-    new_lam = 0
-
-    while (True):
-        # print("search with lambda: ", lam)
-        if (np.abs(lam) < lam_min):
-            return cs.DM_inf(x.shape[0])
-
-        x_next = x + lam * dx
-        # compute monitoring quantities
-        theta = cs.norm_2(G(x_next)) / cs.norm_2(G(x))
-        if (np.isnan(theta)):
-            theta = np.inf
-
-        mu = 0.5 * lam**2 * cs.norm_2(G(x)) / cs.norm_2(G(x_next) - (1 - lam) * G(x))
-        mu = float(mu)
-        if (np.isnan(mu)):
-            mu = np.inf
-
-        if (theta >= 1 - lam / 4):
-            new_lam = np.min(np.array([mu, 0.5 * lam]).flatten())
-            lam = new_lam
-        else:
-            break
-
-    return x + lam * dx
 
 
 def newton(G, start, TOL=1.e-6, max_iter=50, line_search=False):
     counter = 0
     x = start
 
-    y = cs.MX.sym('y', x.shape[0])
-    DG = cs.Function('J', [y], [cs.jacobian(G(y), y)], ['x_in'], ['J'])
     curr_norm = float(cs.norm_2(G(x)))
     if (np.isnan(curr_norm)):
         return cs.DM_inf(2), max_iter
 
+    newton_step = cs.rootfinder('newton_step', 'newton', G,
+                                {'line_search': line_search, 'max_iter': 1, 'error_on_fail': False})
     while (counter < max_iter and curr_norm >= TOL):
-        dx = -cs.solve(DG(x), G(x))
-        if (line_search):
-            x_new = trust_region(G, x, dx)
-        else:
-            x_new = x + dx
-
-        x = x_new
+        x = newton_step(x)
         curr_norm = float(cs.norm_2(G(x)))
         if (curr_norm == cs.inf or np.isnan(curr_norm)):
             return cs.DM_inf(2), max_iter

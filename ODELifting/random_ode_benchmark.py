@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import utils.create_bvp as create_bvp
 import utils.initialization as initialization
 import utils.newton as newton
@@ -9,12 +10,12 @@ import os
 
 # settings
 log_results = True  # write results into log file
-delete_log = False  # erase all previous entries in the log file
-plot_auto_lift = True  # plot the current lifting for every step of auto_lifted_newton
+delete_log = True  # erase all previous entries in the log file
+plot_auto_lift = False  # plot the current lifting for every step of auto_lifted_newton
 plot_results = True  # plot the convergence comparison for the different algorithms
 plot_delay = 0.25          # how long to show each newton iteration for repeated lifting
 result_delay = 2        # how long to show the convergence plots
-verbose = True        # print out all Newton iterations
+verbose = False        # print out all Newton iterations
 
 dims = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 num_reps = 5
@@ -32,6 +33,16 @@ if (log_results and delete_log):
     f.close()
 
 for curr_dim in dims:
+    print(f"Dimension {curr_dim}")
+    def_iter = 0
+    fs_iter = 0
+    auto_iter = 0
+    heur_auto_iter = 0
+
+    def_contr = 0
+    graph_contr = 0
+    heur_auto_contr = 0
+
     for rep in range(num_reps):
         counter += 1
         # get problem details
@@ -57,13 +68,14 @@ for curr_dim in dims:
         _, func_arr = newton.newton(B_def, init["s_start"],
                                     opts={"verbose": verbose, "max_iter": 20})
         default_conv = [float(el) for el in func_arr]
+        def_contr += default_conv[1] / default_conv[0]
 
         # lift at every point to compute all possible steps
         s_init = initialization.initialize(init, grid, ode)
         grid["lift"] = [1 for i in range(len(time_points))]
         B_lift_all = create_bvp.create_bvp(ode, R, grid, s_dim)
-        first_iter, _ = newton.newton(B_lift_all, s_init,
-                                      opts={"verbose": False, "max_iter": 1})
+        first_iter, first_norms = newton.newton(B_lift_all, s_init,
+                                                opts={"verbose": False, "max_iter": 1})
 
         # graph-based lifting
         if (verbose):
@@ -72,11 +84,12 @@ for curr_dim in dims:
         graph_lift = lifting.best_graph_lift(ode, R, time_points, first_iter, time_points,
                                              s_dim, verbose=False)
         grid["lift"] = initialization.convert_lifting(graph_lift, time_points)
-        lift_init = initialization.select_states(s_init, s_dim, grid["lift"])
+        lift_init = initialization.select_states(first_iter, s_dim, grid["lift"])
         B_graph_lift = create_bvp.create_bvp(ode, R, grid, s_dim)
         _, func_arr = newton.newton(B_graph_lift, lift_init,
                                     opts={"verbose": verbose})
-        graph_conv = [float(el) for el in func_arr]
+        graph_conv = [float(first_norms[0])] + [float(el) for el in func_arr]
+        graph_contr += graph_conv[1] / graph_conv[0]
 
         # best lifting for every iteration
         if (verbose):
@@ -104,19 +117,7 @@ for curr_dim in dims:
                                               "plot": plot_auto_lift,
                                               "plot_delay": plot_delay})
         heur_auto_conv = [float(el) for el in func_arr]
-
-        if (log_results):
-            f = open(filename, "a")
-            def_iter = str(len(default_conv) - 1)
-            fs_iter = str(len(graph_conv) - 1)
-            auto_iter = str(len(auto_conv) - 1)
-            heur_auto_iter = str(len(heur_auto_conv) - 1)
-            start_log = str(init["s_start"])
-            table_list = "dim. " + str(curr_dim)
-            table_list += "$ & $" + def_iter + "$ & $" + fs_iter + "$ & $" + auto_iter
-            table_list += "$ & $" + heur_auto_iter + "$ \\\\ \n"
-            f.write(table_list)
-            f.close()
+        heur_auto_contr += heur_auto_conv[1] / heur_auto_conv[0]
 
         if (plot_results):
             plt.plot([i for i in range(len(default_conv))], default_conv, label="no lifting")
@@ -134,3 +135,22 @@ for curr_dim in dims:
             plt.pause(result_delay)
             plt.close()
 
+        def_iter += len(default_conv) - 1
+        fs_iter += len(graph_conv) - 1
+        auto_iter += len(auto_conv) - 1
+        heur_auto_iter += len(heur_auto_conv) - 1
+
+    if (log_results):
+        # transform into the right format with exponents
+        avg_def_contr = np.format_float_scientific(def_contr / num_reps, precision=3)
+        avg_graph_contr = np.format_float_scientific(graph_contr / num_reps, precision=3)
+        avg_heur_contr = np.format_float_scientific(heur_auto_contr / num_reps, precision=3)
+        f = open(filename, "a")
+        table_list = "dim. " + str(curr_dim)
+        table_list += "$ & $" + str(def_iter / num_reps) + f"({avg_def_contr})"
+        table_list += "$ & $" + str(fs_iter / num_reps) + f"({avg_graph_contr})"
+        table_list += "$ & $" + str(auto_iter / num_reps)
+        table_list += "$ & $" + str(heur_auto_iter / num_reps) + f"({avg_heur_contr})"
+        table_list += "$ \\\\ \n"
+        f.write(table_list)
+        f.close()

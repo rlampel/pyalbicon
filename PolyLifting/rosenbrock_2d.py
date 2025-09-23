@@ -68,34 +68,6 @@ def best_initial_lift(G, x_start, opts={}):
     return lift
 
 
-def newton_auto_lift(G, x_start, opts={}):
-    """Newton's method with automatic lifting for the Rosenbrock function.
-
-    Keyword arguments:
-        G       -- casadi function for which Newton's method is performed
-        x_start -- start point of Newton's method
-        opts    -- dict that contains further option:
-                    - TOL       -- final residual tolerance
-                    - max_iter  -- maximum number of iterations
-    """
-    # compute the normal lifted Newton step
-    TOL = opts.get("TOL", 1.e-12)
-    max_iter = opts.get("max_iter", 100)
-    counter = 0
-    x_next = x_start
-    func_arr = []
-
-    while (cs.norm_2(G(x_next)) > TOL and counter < max_iter):
-        x_next, func_val = newton.newton(G, x_next, {"max_iter": 1})
-        x_auto = fs_init(cs.DM([x_next[0], x_next[2]]))
-        if (cs.norm_2(G(x_next)) > cs.norm_2(G(x_auto))):
-            x_next = x_auto
-            func_val = [cs.norm_2(G(x_auto))]
-        func_arr += func_val
-        counter += 1
-    return x_next, func_arr
-
-
 def _init_worker(lifted):
     """Initialize R in each worker (avoid pickling CasADi object)."""
     global _global_R, _global_R_lifted
@@ -152,11 +124,9 @@ xb = [xlb, xub]
 yb = [ylb, yub]
 plot_default = create_heatmap_parallel(xb, yb, plot_dim)
 plot_lift = create_heatmap_parallel(xb, yb, plot_dim, True)
-print("sample lift: ", plot_lift[10, 10])
 max_val_def = np.max(plot_default)
 max_val_lift = np.max(plot_lift)
 max_val = np.max([max_val_def, max_val_lift])
-print("max_val: ", max_val_def, max_val_lift, max_val)
 
 fig, axes = plt.subplots(1, 2, figsize=(15, 6), dpi=100, sharey=True)
 im1 = axes[0].imshow(plot_default, vmin=0, vmax=max_val, cmap=mpl.colormaps["Greys"])

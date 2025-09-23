@@ -22,9 +22,11 @@ class Problem(base_class.BVP):
 
         A = cs.DM(np.random.rand(self.x_dim, self.x_dim))
         A = cs.DM.ones(self.x_dim, self.x_dim) - 2 * A
+        A *= 2
 
         b = cs.DM(np.random.rand(self.x_dim))
         b = cs.DM.ones(self.x_dim) - 2 * b
+        b *= 2
         xdot = A @ x + b
 
         # Objective term
@@ -42,7 +44,7 @@ class Problem(base_class.BVP):
 
     def get_init(self):
         init = {}
-        init["s_start"] = cs.DM([0.] * self.x_dim)
+        init["s_start"] = cs.DM([1.] * self.x_dim)
         init["s_dim"] = self.x_dim
         return init
 

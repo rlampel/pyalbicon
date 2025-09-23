@@ -8,7 +8,7 @@ import os
 
 # Define the neural network
 
-lift = False
+lift = True
 log_results = True
 dirname = os.path.dirname(__file__)
 filename_log = os.path.join(dirname, "nn_results" + "_lift" * lift + ".log")
@@ -121,7 +121,8 @@ def create_adversary(model, target_index, lift=True):
     DL = cs.Function("DL", [temp_var], [cs.jacobian(L(temp_var), temp_var)])
 
     # penalty function
-    P1 = cs.norm_2(X - cs.DM([1] * 784))**2
+    one_diff = X - cs.DM([1] * 784)
+    P1 = cs.norm_2(one_diff)**2
     P2 = cs.norm_2(X)**2
     P = cs.Function("P", [X], [P1 + P2])
     DP = cs.Function("DP", [X], [cs.jacobian(P(X), X)])
@@ -134,42 +135,6 @@ def create_adversary(model, target_index, lift=True):
     final_layer += DP(X)
     RHS = cs.vertcat(RHS, final_layer.T)
     return cs.Function("NN", [total_input], [RHS])
-
-
-def trust_region(G, x, dx, start_mu=1, TOL=1.e-6, verbose=True):
-    lam_min = 1.e-16
-    mu = start_mu
-    if (np.isnan(mu)):
-        mu = np.inf
-        lam = 1
-    else:
-        lam = np.min([1, mu])
-    new_lam = 0
-
-    while (True):
-        if (verbose):
-            print("trust region with lam = ", lam)
-        if (np.abs(lam) < lam_min):
-            raise ValueError("Step size control too small!")
-
-        x_next = x + lam * dx
-        # compute monitoring quantities
-        theta = cs.norm_2(G(x_next)) / cs.norm_2(G(x))
-        if (np.isnan(theta)):
-            theta = np.inf
-
-        mu = 0.5 * lam**2 * cs.norm_2(G(x)) / cs.norm_2(G(x_next) - (1 - lam) * G(x))
-        mu = float(mu)
-        if (np.isnan(mu)):
-            mu = np.inf
-
-        if (theta >= 1 - lam / 4):
-            new_lam = np.min(np.array([mu, 0.5 * lam]).flatten())
-            lam = new_lam
-        else:
-            break
-
-    return lam, mu
 
 
 def efficient_newton(G, x_start, model, opts={}):
@@ -207,8 +172,8 @@ def efficient_newton(G, x_start, model, opts={}):
             f = open(filename_log, "a")
             f.write(str(counter) + " " + str(func_norm) + "\n")
             f.close()
-        print("Current loss: ", cross_entropy_loss(curr_out, target_index))
-        print("Sigmoid: ", sigmoid(curr_out))
+        print("\t Current loss: ", cross_entropy_loss(curr_out, target_index))
+        # print("Sigmoid: ", sigmoid(curr_out))
     return x, func_arr
 
 
@@ -237,7 +202,7 @@ def auto_lifted_newton(G, x_start, model, opts={}):
         fs_norm = cs.norm_2(fs_val)
 
         if func_norm > fs_norm:
-            print("REPLACE BY FSINIT")
+            # REPLACE BY FSINIT
             x = x_fs
             func_norm = fs_norm
 
@@ -259,8 +224,8 @@ def auto_lifted_newton(G, x_start, model, opts={}):
             f = open(filename_log, "a")
             f.write(str(counter) + " " + str(func_norm) + "\n")
             f.close()
-        print("Current loss: ", cross_entropy_loss(curr_out, target_index))
-        print("Sigmoid: ", sigmoid(curr_out))
+        print("\t Current loss: ", cross_entropy_loss(curr_out, target_index))
+        # print("Sigmoid: ", sigmoid(curr_out))
     return x, func_arr
 
 
@@ -279,7 +244,14 @@ start = cs.DM([0.1] * 784)
 
 X = cs.MX.sym("X", 784)
 Net = create_adversary(model, target_index, False)
-print("starting probabilities: ", sigmoid(compute_final_output(model, start)[-10:]))
+print("starting probabilities: ", sigmoid(compute_final_output(model, start * 0)[-10:]))
+
+# check initial cross entropy loss
+out = compute_final_output(model, start)
+net_out = out[-10:]
+print("Initial output: \t", net_out)
+for i in range(10):
+    print(i, ": ", cross_entropy_loss(net_out, i))
 
 
 if (lift is True):
@@ -296,7 +268,6 @@ else:
 
     sol, _ = efficient_newton(DNet, start, model)
 
-print(sol)
 plot_sol = np.reshape(np.array(sol[:784]), (28, 28))
 plt.clf()
 plt.imshow(plot_sol + plot_test, cmap="Greys")
@@ -304,7 +275,6 @@ plt.colorbar()
 plt.show()
 # evaluate final result:
 sol = sol[:784]
-# sol += test
 out = compute_final_output(model, sol)
 net_out = out[-10:]
 print("Final output: \t", net_out)

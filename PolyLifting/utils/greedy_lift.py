@@ -17,6 +17,8 @@ def greedy_start(coeffs, x_in, lift_degree=2, lift_type=""):
     max_degree = poly_dim - 1
     G_all = create_poly.create_lifted_poly(coeffs, lift_degree, lift_type=lift_type)
     lift_start = initialize.initialize_auto(x_in, poly_dim, lift_degree)
+
+    # compute states after one Newton step
     opts = {"max_iter": 1}
     lift_step, _ = newton.newton(G_all, lift_start, opts)
 
@@ -135,6 +137,7 @@ def greedy_lift(poly, x_in, lift_in, num_coeffs, lift_degree=2):
         if (curr_norm < best_norm):
             # change lifting if current is better
             greedy_lift[i] = lift_temp[i]
+            best_norm = curr_norm
 
     return greedy_lift
 
