@@ -9,16 +9,18 @@ import os
 
 
 # settings
-log_results = True  # write results into log file
-delete_log = True  # erase all previous entries in the log file
+log_results = False  # write results into log file
+delete_log = False  # erase all previous entries in the log file
 plot_auto_lift = False  # plot the current lifting for every step of auto_lifted_newton
 plot_results = True  # plot the convergence comparison for the different algorithms
 plot_delay = 0.25          # how long to show each newton iteration for repeated lifting
 result_delay = 2        # how long to show the convergence plots
 verbose = False        # print out all Newton iterations
 
+
+# all dimensions for which the BVP are being solved
 dims = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-num_reps = 5
+num_reps = 5  # number of runs per dimension
 counter = 0
 
 
@@ -84,6 +86,7 @@ for curr_dim in dims:
         graph_lift = lifting.best_graph_lift(ode, R, time_points, first_iter, time_points,
                                              s_dim, verbose=False)
         grid["lift"] = initialization.convert_lifting(graph_lift, time_points)
+        # the first step has already been computed by the lifting algorithm, start at step 2
         lift_init = initialization.select_states(first_iter, s_dim, grid["lift"])
         B_graph_lift = create_bvp.create_bvp(ode, R, grid, s_dim)
         _, func_arr = newton.newton(B_graph_lift, lift_init,
@@ -132,6 +135,8 @@ for curr_dim in dims:
             plt.legend()
             plt.yscale("log")
             plt.title("dimension " + str(curr_dim))
+            plt.xlabel(r"Iteration $k$")
+            plt.ylabel(r"Residual $\|G(\mathbf{s}^{(k)})\|$")
             plt.pause(result_delay)
             plt.close()
 

@@ -11,7 +11,7 @@ The benchmark compares the following lifting approaches from [2]:
 - <b>automatic lifting</b> (determines the lifting with the best residual contraction in every iteration as described in Section 3.4.3 of [2])
 - <b>heuristic + auto</b> (combines the initial values determined via the heuristic with the automatic lifting)
 
-By default only the convergence with respect to the residuals is plotted. Further options such as plotting the heatmaps shown in Figure 12 of [2] can be adjusted at the top of the file.
+By default only the convergence with respect to the residuals is plotted. Further options such as plotting the heatmaps shown in Table 3 of [2] can be adjusted at the top of the file.
 
 ---
 
@@ -23,6 +23,12 @@ The damping parameter $\lambda$ and the custom initialization can be changed at 
 
 ---
 
+To run the benchmark for random large-scale ODE BVP as shown in Section 4.5 of [2], run
+```
+python random_ode_benchmark.py
+```
+
+---
 [1]: Mazzia, F., Cash, J.R.: A Fortran Test Set for Boundary Value Problem Solvers, vol. 1648 (2015)
 
 [2]: Lampel, R., Sager, S.: On liftings that improve convergence properties of Newton’s Method for Boundary Value Optimization Problems

@@ -1,7 +1,7 @@
 # Neural Network Lifting
 
 
-To compute an adversarial attack on a neural network as described in Section 4.4 of [1], run
+To compute an adversarial attack on a neural network as described in Section 4.3 of [1], run
 ```
 python lifted_nn.py
 ```

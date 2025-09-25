@@ -5,15 +5,15 @@ This software implements lifting algorithms for Newton's method applied to bound
 ```
 where $F$ consists of intermediate function evaluations.
 Further details are described in [1]. It consists of three distinct parts:
-- "NNLifting" implements the adversarial attack on a neural network as described in Section 4.4 of [1].
-- "ODELifting" implements the lifting via dynamic programming for ODE-based BVP as described in Section 4.5 of [1].
-- "PolyLifting" implements the greedy and enumerative lifting algorithms for polynomials as described in Section 4.2 of [1] as well as the Rosenbrock example from Section 4.3.
+- "PolyLifting" implements the greedy and enumerative lifting algorithms for polynomials as described in Section 4.1 of [1] as well as the Rosenbrock example from Section 4.2.
+- "NNLifting" implements the adversarial attack on a neural network as described in Section 4.3 of [1].
+- "ODELifting" implements the lifting via dynamic programming for ODE-based BVP as described in Section 4.4 and 4.5 of [1].
 
-The main goal is to reduce the number of iterations of Newton's method required to solve these problems. Condensing techniques can be used to speed up the computation of these lifted steps, but are currently not implemented. Further information is given in the corresponding directories. The computations in [2] were performed on Ubuntu 22 using an AMD Ryzen 7 4800h. We noticed that using an Apple M2 CPU leads to slightly different results.
+The main goal is to reduce the number of iterations of Newton's method required to solve these problems. Further information is given in the corresponding directories. The computations in [2] were performed using Python 3.13.5 on Ubuntu 24 running on an AMD Ryzen 7 4800h with 16GB of RAM. We noticed that using an Apple M2 CPU leads to slightly different results.
 
 ---
 
-This software relies on CasADi [2], NumPy [3], and SciPy [4].
+This software relies on CasADi [2], NumPy [3], and SciPy [4]. Additionally, PyTorch [5] is used to load the model weights of the neural network. A more detailed list can be found in the file 'requirements.txt'.
 
 ---
 [1]: [Lampel, R., Sager, S.: "On liftings that improve convergence properties of Newton’s Method for Boundary Value Optimization Problems"](https://optimization-online.org/?p=29392) 
@@ -34,3 +34,5 @@ W., Oliphant, T.E., Cournapeau, D., Nelson, A., alexbrc, Roy, P., Peterson, P.,
 Polat, I., Wilson, J., endolith, Mayorov, N., Walt, S., Colley, L., Brett, M., Lax-
 alde, D., Larson, E., Sakai, A., Millman, J., Bowhay, J., Lars, peterbell10, Carey,
 C., Mulbregt, P., eric-jones, Striega, K.: Scipy/scipy: SciPy 1.15.0
+
+[5] Imambi, S., Prakash, K. B., & Kanagachidambaresan, G. R. (2021). PyTorch. In Programming with TensorFlow: solution for edge computing applications (pp. 87-104). Cham: Springer International Publishing.

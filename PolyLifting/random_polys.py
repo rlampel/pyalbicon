@@ -7,7 +7,7 @@ import utils.greedy_lift as greedy_lift
 import os
 
 
-log_results = True  # write results to a file
+log_results = False  # write results to a file
 log_contraction = False  # log the initial contractions and number of iterations
 lift_degree = 2  # degree of the component functions
 plot_delay = 0.01  # how many seconds to show the results
@@ -68,11 +68,17 @@ for poly_dim in range(5, 18, 2):
         plt.plot([i for i in range(1, len(plot_vals) + 1)], plot_vals, label="greedy (b)")
         avg_greedy += len(plot_vals)
         avg_greedy_contr += plot_vals[0] / init_res
+        final_val = float(plot_vals[-1])
+        if (final_val >= TOL or np.isnan(final_val)):
+            avg_greedy = np.inf
 
         sol, plot_vals = newton.newton(G2, s2)
         plt.plot([i for i in range(1, len(plot_vals) + 1)], plot_vals, label="enum (b)")
         avg_enum += len(plot_vals)
         avg_enum_contr += plot_vals[0] / init_res
+        final_val = float(plot_vals[-1])
+        if (final_val >= TOL or np.isnan(final_val)):
+            avg_enum = np.inf
 
         sol, plot_vals = newton.newton(G1m, s1m)
         plt.plot([i for i in range(1, len(plot_vals) + 1)], plot_vals,

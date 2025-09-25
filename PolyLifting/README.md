@@ -1,7 +1,7 @@
 # Polynomial Lifting
 
 
-To recreate the Newton fractals shown in Figure 3 and Figure 4 of [1], run
+To recreate the Newton fractals shown in Figure 2 of [1], run
 ```
 python fractal.py
 ```
@@ -9,7 +9,7 @@ The settings at the top of the file can be adjusted to choose between the differ
 
 ---
 
-To recreate the plot shown in Figure 5 of [1], run
+To recreate the plot shown in Figure 7 of [1], run
 ```
 python x16_example.py
 ```
@@ -23,7 +23,7 @@ python random_poly.py
 ```
 ---
 
-To recreate the convergence plot for the Rosenbrock function shown in Figure 9 of [1], run
+To recreate the convergence plot for the Rosenbrock function shown in Figure 8 of [1], run
 ```
 python rosenbrock_2d.py
 ```
