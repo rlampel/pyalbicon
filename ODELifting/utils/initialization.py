@@ -144,10 +144,12 @@ def select_states(s_init, s_dim, lifting_points):
         s_dim   -- dimension of one intermediate variable
         lifting_points  -- list with binary entries for every lifting point
     """
-    sel_states = cs.DM([])
-    for i in range(len(lifting_points)):
-        if (lifting_points[i] or i == 0):
-            curr_s = s_init[i * s_dim:(i + 1) * s_dim]
-            sel_states = cs.vertcat(sel_states, curr_s)
-    return sel_states
+    # Precompute indices of selected blocks
+    indices = []
+    for i, lp in enumerate(lifting_points):
+        if lp or i == 0:
+            indices.extend(range(i * s_dim, (i + 1) * s_dim))
+
+    # Use CasADi indexing once
+    return s_init[indices]
 

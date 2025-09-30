@@ -158,6 +158,7 @@ cax = fig2.add_axes([ax2.get_position().x1 + 0.05,
                     ax2.get_position().height])
 colorbar = fig2.colorbar(im2, cax=cax)
 colorbar.set_ticks(ticks=[10 * k for k in range(1, 6)])
+colorbar.set_label("Number of iterations", size=16)
 ax2.set_xticks([0, dimx - 1], [x_interv[0], x_interv[1]], fontsize=14)
 ax2.set_yticks([0, dimy - 1], [y_interv[1], y_interv[0]], fontsize=14)
 ax2.set_xlabel(r"real part", size=16)

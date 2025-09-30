@@ -13,7 +13,7 @@ log_results = False  # write results into log file
 delete_log = False  # erase all previous entries in the log file
 plot_auto_lift = False  # plot the current lifting for every step of auto_lifted_newton
 plot_results = True  # plot the convergence comparison for the different algorithms
-plot_delay = 0.25          # how long to show each newton iteration for repeated lifting
+plot_delay = 1.5          # how long to show each newton iteration for repeated lifting
 result_delay = 2        # how long to show the convergence plots
 verbose = False        # print out all Newton iterations
 
@@ -67,6 +67,7 @@ for curr_dim in dims:
             print("UNLIFTED:")
         grid["lift"] = [0 for i in range(len(time_points))]
         B_def = create_bvp.create_bvp(ode, R, grid, s_dim)
+        # capped at 20 iterations to save time, it does not converge with more iterations
         _, func_arr = newton.newton(B_def, init["s_start"],
                                     opts={"verbose": verbose, "max_iter": 20})
         default_conv = [float(el) for el in func_arr]
@@ -94,16 +95,6 @@ for curr_dim in dims:
         graph_conv = [float(first_norms[0])] + [float(el) for el in func_arr]
         graph_contr += graph_conv[1] / graph_conv[0]
 
-        # best lifting for every iteration
-        if (verbose):
-            print("----" * 10)
-            print("AUTOMATIC LIFTING:")
-        func_arr = newton.auto_lifted_newton(problem,
-                                             opts={"verbose": verbose,
-                                                   "plot": plot_auto_lift,
-                                                   "plot_delay": plot_delay})
-        auto_conv = [float(el) for el in func_arr]
-
         # heuristic lifting
         # constant initialization for all variables
         start_vals = initialization.initialize_lin(init, grid)
@@ -126,8 +117,6 @@ for curr_dim in dims:
             plt.plot([i for i in range(len(default_conv))], default_conv, label="no lifting")
             plt.plot([i for i in range(len(graph_conv))], graph_conv, label="graph lifting",
                      linestyle="-.")
-            plt.plot([i for i in range(len(auto_conv))], auto_conv, label="auto lifting",
-                     linestyle="--")
             plt.plot([i for i in range(len(heur_auto_conv))], heur_auto_conv,
                      label="heuristic + auto",
                      linestyle="--")
@@ -142,7 +131,6 @@ for curr_dim in dims:
 
         def_iter += len(default_conv) - 1
         fs_iter += len(graph_conv) - 1
-        auto_iter += len(auto_conv) - 1
         heur_auto_iter += len(heur_auto_conv) - 1
 
     if (log_results):
@@ -154,7 +142,6 @@ for curr_dim in dims:
         table_list = "dim. " + str(curr_dim)
         table_list += "$ & $" + str(def_iter / num_reps) + f"({avg_def_contr})"
         table_list += "$ & $" + str(fs_iter / num_reps) + f"({avg_graph_contr})"
-        table_list += "$ & $" + str(auto_iter / num_reps)
         table_list += "$ & $" + str(heur_auto_iter / num_reps) + f"({avg_heur_contr})"
         table_list += "$ \\\\ \n"
         f.write(table_list)

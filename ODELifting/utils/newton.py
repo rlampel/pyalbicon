@@ -53,7 +53,7 @@ def trust_region(G, x, dx, start_mu=1, TOL=1.e-6, verbose=False):
 
 
 def newton(G, x_start, opts={}):
-    """Newton's method.
+    """More accurate version of Newton's method that computes and inverts the Jacobian.
 
     Keyword arguments:
         G       -- casadi function for which Newton's method is performed
@@ -153,6 +153,7 @@ def auto_lifted_newton(problem, lift_init=None, s_init=None, opts={}):
     func_arr = [func_norm]
     s_curr = init["sol"]
     counter = 0
+
     while (func_norm > TOL and counter < max_iter):
         # perform Newton step with all lifting points
         ds = - cs.solve(DB_lift_all(s_curr), func_val)
@@ -162,7 +163,8 @@ def auto_lifted_newton(problem, lift_init=None, s_init=None, opts={}):
         counter += 1
 
         # determine best lifting
-        graph_points = lifting.best_graph_lift(ode, R, time_points, s_next, time_points, s_dim)
+        graph_points = lifting.best_graph_lift(ode, R, time_points, s_next, time_points, s_dim,
+                                               parallel=False)
         graph_lift = initialization.convert_lifting(graph_points, time_points)
         s_next = initialization.select_states(s_next, s_dim, graph_lift)
 
@@ -170,6 +172,7 @@ def auto_lifted_newton(problem, lift_init=None, s_init=None, opts={}):
         grid["lift"] = graph_lift
         init["sol"] = s_next
         s_curr = initialization.initialize(init, grid, ode)
+
         func_val = B_lift_all(s_curr)
         func_norm = cs.norm_2(func_val)
         func_arr += [func_norm]

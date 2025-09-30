@@ -1,6 +1,7 @@
 import casadi as cs
 import numpy as np
-from . import newton, create_bvp, initialization, lifting
+from . import create_bvp, initialization, lifting
+from . import newton
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor
 

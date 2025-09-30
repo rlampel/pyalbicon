@@ -9,7 +9,7 @@ Further details are described in [1]. It consists of three distinct parts:
 - "NNLifting" implements the adversarial attack on a neural network as described in Section 4.3 of [1].
 - "ODELifting" implements the lifting via dynamic programming for ODE-based BVP as described in Section 4.4 and 4.5 of [1].
 
-The main goal is to reduce the number of iterations of Newton's method required to solve these problems. Further information is given in the corresponding directories. The computations in [2] were performed using Python 3.13.5 on Ubuntu 24 running on an AMD Ryzen 7 4800h with 16GB of RAM. We noticed that using an Apple M2 CPU leads to slightly different results.
+The main goal is to reduce the number of iterations of Newton's method required to solve these problems. Further information is given in the corresponding directories. The computations in [2] were performed using Python 3.13.5 on Ubuntu 24, running on an AMD Ryzen 7 4800h with 16GB of RAM. We noticed that using an Apple M2 CPU leads to slightly different results.
 
 ---
 

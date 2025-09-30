@@ -1,9 +1,8 @@
-import casadi as cs
 import matplotlib.pyplot as plt
 import utils.get_problem as get_p
 import utils.create_bvp as create_bvp
 import utils.initialization as initialization
-import utils.fast_newton as newton
+import utils.newton as newton
 import utils.lifting as lifting
 import utils.heatmap as heatmap
 import utils.heatmap_iter as heatmap_iter
@@ -12,9 +11,9 @@ import os
 
 
 # settings
-log_results = True  # write results into log file
-plot_contr_region = False  # plot the local contraction as a heatmap
-plot_iter_region = False  # plot the number of required iterations as a heatmap
+log_results = False  # write results into log file
+plot_contr_region = True  # plot the local contraction as a heatmap
+plot_iter_region = True  # plot the number of required iterations as a heatmap
 plot_auto_lift = False  # plot the current lifting for every step of auto_lifted_newton
 plot_results = True  # plot the convergence comparison for the different algorithms
 plot_delay = 0.1          # how long to show each newton iteration for repeated lifting
@@ -48,6 +47,7 @@ for p in range(19, 34):
     time_points = [min_t + (max_t - min_t) * i / num_lifts for i in range(num_lifts + 1)]
     grid["time"] = time_points
 
+    # -------------------------------------------------------------------------------
     # plot local contraction as a heatmap
     if (plot_contr_region and s_dim == 2):
         plot_dim = 21       # resolution of the heatmap
@@ -88,6 +88,8 @@ for p in range(19, 34):
         colorbar.set_label(label=r"contraction $h$", fontsize=16)
         colorbar.set_ticklabels([0, 0.5, 1, 1.5, r"$\geq$2"], fontsize=14)
         plt.show()
+    # -------------------------------------------------------------------------------
+    # plot the number of iterations as a heatmap
     if (plot_iter_region and s_dim == 2):
         plot_dim = 21       # resolution of the heatmap
         xlb, xub = -5, 5     # boundaries of the heatmap
@@ -162,16 +164,20 @@ for p in range(19, 34):
     first_iter, first_norm = newton.newton(B_lift_all, s_init,
                                            opts={"verbose": False, "max_iter": 1})
 
+    # temp_start = timeit.default_timer()
     graph_lift = lifting.best_graph_lift(ode, R, time_points, first_iter, time_points,
-                                         s_dim, verbose=False)
+                                         s_dim, verbose=False, parallel=False)
     grid["lift"] = initialization.convert_lifting(graph_lift, time_points)
     lift_init = initialization.select_states(first_iter, s_dim, grid["lift"])
+    # temp_time = timeit.default_timer() - temp_start
 
     B_graph_lift = create_bvp.create_bvp(ode, R, grid, s_dim)
     _, func_arr = newton.newton(B_graph_lift, lift_init,
                                 opts={"verbose": verbose})
     func_arr = [first_norm[0]] + func_arr
     graph_time = timeit.default_timer() - start_time
+
+    # print(f"Alg. percentage: {temp_time / graph_time}")
 
     graph_conv = [float(el) for el in func_arr]
 
@@ -188,6 +194,7 @@ for p in range(19, 34):
                                                "plot_delay": plot_delay})
     auto_time = timeit.default_timer() - start_time
     auto_conv = [float(el) for el in func_arr]
+    print("total time: ", auto_time, "\n", "-" * 20)
 
     # -------------------------------------------------------------------------------
     # heuristic lifting
@@ -219,10 +226,10 @@ for p in range(19, 34):
         heur_auto_iter = str(len(heur_auto_conv) - 1)
         start_log = str(init["s_start"])
         table_list = curr_name + " & " + str(problem.lamb) + " & $" + start_log + "$ & $"
-        table_list += def_iter + " \; (" + f"{def_time:.3f}" + ")$ & $"
-        table_list += fs_iter + " \; (" + f"{graph_time:.3f}" + ")$ & $"
-        table_list += auto_iter + " \; (" + f"{auto_time:.3f}" + ")$ & $"
-        table_list += heur_auto_iter + " \; (" + f"{heur_auto_time:.3f}" + ")$ \\\\ \n"
+        table_list += def_iter + " (" + f"{def_time:.3f}" + ")$ & $"
+        table_list += fs_iter + " (" + f"{graph_time:.3f}" + ")$ & $"
+        table_list += auto_iter + " (" + f"{auto_time:.3f}" + ")$ & $"
+        table_list += heur_auto_iter + " (" + f"{heur_auto_time:.3f}" + ")$ \\\\ \n"
         f.write(table_list)
         f.close()
 

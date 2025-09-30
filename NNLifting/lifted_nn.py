@@ -8,10 +8,14 @@ import os
 
 # Define the neural network
 
-lift = True
-log_results = True
+lift = True    # automatically lifted (True) or unlifted (False) formulation
+log_results = True  # write the residual convergence to a file
 dirname = os.path.dirname(__file__)
 filename_log = os.path.join(dirname, "nn_results" + "_lift" * lift + ".log")
+target_index = 9
+
+# set initial perturbartion, i.e., start point
+start = cs.DM([0.1] * 784)
 
 if (log_results):
     f = open(filename_log, "w")
@@ -19,6 +23,9 @@ if (log_results):
     f.write(title + "\n")
     f.close()
 
+
+# ----------------------------------------------------------------------------------------
+# function definitions
 
 class NeuralNet(nn.Module):
     def __init__(self):
@@ -73,7 +80,7 @@ def get_weights(model):
 
 def compute_final_output(model, input):
     Xk = input
-    Xk += test
+    Xk += seven_image
 
     W, b = get_weights(model)
     Xk = sigmoid(W[0] @ Xk + b[0])
@@ -84,7 +91,7 @@ def compute_final_output(model, input):
 def create_lifted_init(model, input):
     lifted_init = input
     Xk = input
-    Xk += test
+    Xk += seven_image
 
     W, b = get_weights(model)
     Xk = sigmoid(W[0] @ Xk + b[0])
@@ -99,7 +106,7 @@ def create_adversary(model, target_index, lift=True):
     Xk = X
 
     # add starting image
-    Xk += test
+    Xk += seven_image
     W, b = get_weights(model)
 
     # lift after the sigmoid function
@@ -137,7 +144,7 @@ def create_adversary(model, target_index, lift=True):
     return cs.Function("NN", [total_input], [RHS])
 
 
-def efficient_newton(G, x_start, model, opts={}):
+def newton(G, x_start, model, opts={}):
     TOL = opts.get("TOL", 1.e-10)
     max_iter = opts.get("max_iter", 100)
 
@@ -162,7 +169,7 @@ def efficient_newton(G, x_start, model, opts={}):
         print("\t norm: ", func_norm)
         curr_out = compute_final_output(model, x[:784])
         plot_sol = np.reshape(np.array(x[:784]), (28, 28))
-        plot_sol += plot_test
+        plot_sol += plot_seven
         plt.clf()
         plt.title("Iteration " + str(counter))
         plt.imshow(plot_sol, cmap="Greys")
@@ -214,7 +221,7 @@ def auto_lifted_newton(G, x_start, model, opts={}):
         print("\t norm: ", func_norm)
         curr_out = compute_final_output(model, x[:784])
         plot_sol = np.reshape(np.array(x[:784]), (28, 28))
-        plot_sol += plot_test
+        plot_sol += plot_seven
         plt.clf()
         plt.title("Iteration " + str(counter))
         plt.imshow(plot_sol, cmap="Greys")
@@ -225,34 +232,29 @@ def auto_lifted_newton(G, x_start, model, opts={}):
             f.write(str(counter) + " " + str(func_norm) + "\n")
             f.close()
         print("\t Current loss: ", cross_entropy_loss(curr_out, target_index))
-        # print("Sigmoid: ", sigmoid(curr_out))
     return x, func_arr
 
 
+# ----------------------------------------------------------------------------------------
+# load the model weights
 model = NeuralNet()
 filename_weights = os.path.join(dirname, "trained_weights/mnist_model.pth")
 model.load_state_dict(torch.load(filename_weights))
 
 filename_seven = os.path.join(dirname, "MNIST_7.dat")
-test = np.loadtxt(filename_seven, delimiter=",")
-test = cs.DM(test)
-plot_test = np.reshape(np.array(test), (28, 28))
-
-target_index = 9
-
-start = cs.DM([0.1] * 784)
-
-X = cs.MX.sym("X", 784)
-Net = create_adversary(model, target_index, False)
-print("starting probabilities: ", sigmoid(compute_final_output(model, start * 0)[-10:]))
+seven_image = np.loadtxt(filename_seven, delimiter=",")
+seven_image = cs.DM(seven_image)
+plot_seven = np.reshape(np.array(seven_image), (28, 28))
 
 # check initial cross entropy loss
 out = compute_final_output(model, start)
 net_out = out[-10:]
 print("Initial output: \t", net_out)
-for i in range(10):
-    print(i, ": ", cross_entropy_loss(net_out, i))
+print("Initial cross entropy loss for 9: ", cross_entropy_loss(net_out, 9))
 
+
+# ----------------------------------------------------------------------------------------
+# create and solve the problem
 
 if (lift is True):
     # Create lifted problem
@@ -266,18 +268,20 @@ else:
     # Create unlifted problem
     DNet = create_adversary(model, target_index, False)
 
-    sol, _ = efficient_newton(DNet, start, model)
+    sol, _ = newton(DNet, start, model)
 
+# ----------------------------------------------------------------------------------------
+# show final results
 plot_sol = np.reshape(np.array(sol[:784]), (28, 28))
 plt.clf()
-plt.imshow(plot_sol + plot_test, cmap="Greys")
+plt.imshow(plot_sol + plot_seven, cmap="Greys")
 plt.colorbar()
+plt.title("Final solution")
 plt.show()
 # evaluate final result:
 sol = sol[:784]
 out = compute_final_output(model, sol)
 net_out = out[-10:]
 print("Final output: \t", net_out)
-for i in range(10):
-    print(i, ": ", cross_entropy_loss(net_out, i))
+print("Final cross entropy loss for 9: ", cross_entropy_loss(net_out, 9))
 

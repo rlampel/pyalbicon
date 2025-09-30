@@ -20,10 +20,12 @@ class Problem(base_class.BVP):
         xdot = cs.DM([])
         np.random.seed(self.seed)
 
+        # random matrix with entries in range [-2, 2]
         A = cs.DM(np.random.rand(self.x_dim, self.x_dim))
         A = cs.DM.ones(self.x_dim, self.x_dim) - 2 * A
         A *= 2
 
+        # random vector with entries in range [-2, 2]
         b = cs.DM(np.random.rand(self.x_dim))
         b = cs.DM.ones(self.x_dim) - 2 * b
         b *= 2

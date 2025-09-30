@@ -20,12 +20,13 @@ s_dim = init["s_dim"]
 
 # settings
 start = cs.DM([1.225, 0.75])
-lamb = 1
+lamb = 1.
 custom_init = False
 if custom_init:
     custom_init_val = cs.DM([3, 3])
     # custom_init_val = cs.DM([0.2, 0.2])
 
+# -----------------------------------------------------------------------------
 # define unlifted grid
 grid = {}
 time_points = [min_t + (max_t - min_t) * i / num_lifts for i in range(num_lifts + 1)]
@@ -33,24 +34,31 @@ grid["time"] = time_points
 lifting_points = [0 for i in range(len(time_points))]
 grid["lift"] = lifting_points
 
+# -----------------------------------------------------------------------------
 # unlifted version
 B_def = create_bvp.create_bvp(ode, R, grid, s_dim)
+# compute the unlifted path
 x_arr_def = newton_path.newton_path(B_def, start, lamb=lamb)
 
+# -----------------------------------------------------------------------------
 # lifted version
 all_states = initialization.initialize_auto(init, grid, ode)
 lifting_points[6] = 1
 grid["lift"] = lifting_points
 B_lift = create_bvp.create_bvp(ode, R, grid, s_dim)
 
+# -----------------------------------------------------------------------------
 # alternative custom initialization:
 if (custom_init):
     lift_start = cs.vertcat(start, custom_init_val)
 else:
     lift_start = initialization.select_states(all_states, 2, lifting_points)
 
+# compute the lifted path
 x_arr_lift = newton_path.newton_path(B_lift, lift_start, lamb=lamb)
 
+# -----------------------------------------------------------------------------
+# Plot results
 plt.figure(figsize=(8, 6))
 plt.plot([float(el[0]) for el in x_arr_def], [float(el[1]) for el in x_arr_def],
          linestyle=":", color="red", label="default", linewidth=2)
