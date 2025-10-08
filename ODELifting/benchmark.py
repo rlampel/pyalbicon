@@ -12,12 +12,12 @@ import os
 
 # settings
 log_results = False  # write results into log file
-plot_contr_region = True  # plot the local contraction as a heatmap
-plot_iter_region = True  # plot the number of required iterations as a heatmap
+plot_contr_region = False  # plot the local contraction as a heatmap
+plot_iter_region = False  # plot the number of required iterations as a heatmap
 plot_auto_lift = False  # plot the current lifting for every step of auto_lifted_newton
 plot_results = True  # plot the convergence comparison for the different algorithms
-plot_delay = 0.1          # how long to show each newton iteration for repeated lifting
-result_delay = 2        # how long to show the convergence plots
+plot_delay = 0.5          # how long to show each newton iteration for repeated lifting
+result_delay = 3        # how long to show the convergence plots
 verbose = False        # print out all Newton iterations
 
 # file where the results will be saved
@@ -156,7 +156,6 @@ for p in range(19, 34):
     start_time = timeit.default_timer()
     # lift at every point to compute all possible steps
     s_init = initialization.initialize(init, grid, ode)
-    # s_init = initialization.initialize_lin(init, grid)
     grid["lift"] = [1 for i in range(len(time_points))]
 
     # determine best lifting and perform first step
@@ -164,20 +163,16 @@ for p in range(19, 34):
     first_iter, first_norm = newton.newton(B_lift_all, s_init,
                                            opts={"verbose": False, "max_iter": 1})
 
-    # temp_start = timeit.default_timer()
     graph_lift = lifting.best_graph_lift(ode, R, time_points, first_iter, time_points,
                                          s_dim, verbose=False, parallel=False)
     grid["lift"] = initialization.convert_lifting(graph_lift, time_points)
     lift_init = initialization.select_states(first_iter, s_dim, grid["lift"])
-    # temp_time = timeit.default_timer() - temp_start
 
     B_graph_lift = create_bvp.create_bvp(ode, R, grid, s_dim)
     _, func_arr = newton.newton(B_graph_lift, lift_init,
                                 opts={"verbose": verbose})
     func_arr = [first_norm[0]] + func_arr
     graph_time = timeit.default_timer() - start_time
-
-    # print(f"Alg. percentage: {temp_time / graph_time}")
 
     graph_conv = [float(el) for el in func_arr]
 
@@ -194,7 +189,6 @@ for p in range(19, 34):
                                                "plot_delay": plot_delay})
     auto_time = timeit.default_timer() - start_time
     auto_conv = [float(el) for el in func_arr]
-    print("total time: ", auto_time, "\n", "-" * 20)
 
     # -------------------------------------------------------------------------------
     # heuristic lifting
